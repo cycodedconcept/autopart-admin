@@ -7,6 +7,7 @@ export const ActionWithReasonModal: React.FC<ActionWithReasonModalProps> = ({
   onClose,
   onConfirm,
   title,
+  type,
   description,
   placeholderText,
   confirmButtonColor,
@@ -16,11 +17,11 @@ export const ActionWithReasonModal: React.FC<ActionWithReasonModalProps> = ({
 
   if (!isOpen) return null;
 
-  const isButtonDisabled = title === "Reject Seller" && !reason.trim();
+  const isButtonDisabled = (title === "Reject Seller" ) && !reason.trim();
 
   const handleConfirmSubmit = () => {
     if (isButtonDisabled) return;
-    onConfirm(reason);
+    onConfirm(reason, type);
     setReason(''); // Reset text field field layer
   };
 
@@ -45,7 +46,7 @@ export const ActionWithReasonModal: React.FC<ActionWithReasonModalProps> = ({
         </div>
 
         {/* Reason Textarea Field Entry */}
-       {title === "Reject Seller" && <div className="mb-6">
+       {(title === "Reject Seller" || title === "Suspend Seller"  )&& <div className="mb-6">
         
           <textarea
             value={reason}

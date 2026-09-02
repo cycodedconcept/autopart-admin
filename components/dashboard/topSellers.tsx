@@ -19,13 +19,18 @@ export const TopSellers = ({ data = [] }: { data: TopSellersItem[] }) => {
     <CardWrapper title="Top sellers this month">
       <div className="flex flex-col divide-y divide-gray-50">
         {data.map((seller, idx) => {
-            const getSeller = seller.fullName.split(" ")
-            let initials;
-            if (getSeller.length > 1){
-                const first = getSeller[0][0]
-                const second = getSeller[1][0]
-                initials = first + second
+          const getSeller = seller.fullName.split(" ");
+          let initials;
+          if (getSeller) {
+            if (getSeller.length > 1) {
+              const first = getSeller[0][0];
+              const second = getSeller[1][0];
+              initials = first + second;
+            } else {
+              const first = getSeller[0][0];
+              initials = first;
             }
+          }
           return (
             <div
               key={idx}
@@ -33,7 +38,7 @@ export const TopSellers = ({ data = [] }: { data: TopSellersItem[] }) => {
             >
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full bg-[#E8EFF9] flex items-center justify-center font-bold text-[10px] text-[#0C447C">
-                  {idx + 1}
+                  {seller.rank}
                 </div>
                 <div className="w-7 h-7 rounded-full bg-[#F5F7FA] flex items-center justify-center font-bold text-[10px] text-[#525866]">
                   {initials}

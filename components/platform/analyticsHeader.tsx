@@ -15,13 +15,13 @@ const AnalyticsHeader: React.FC = () => {
     <section className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 ">
       {/* Platform Text Left Element */}
       <div className=''>
-        <h1 className="text-lg font-medium text-dark  tracking-tight">Platform Analytics</h1>
+        <h1 className="text-xl font-medium text-dark">Platform Analytics</h1>
         <p className="text-sm text-navgray mt-0.5">Overview of marketplace performance</p>
       </div>
 
       {/* Days Pill Picker & Actions Right Element */}
-      <div className="flex items-center gap-3 self-stretch sm:self-auto">
-        {/* Days Pill Selector Grid */}
+      {/* <div className="flex items-center gap-3 self-stretch sm:self-auto">
+        {/* Days Pill Selector Grid *
         <div className="flex p-1 gap-4">
           {ranges.map((range) => (
             <button
@@ -45,8 +45,8 @@ const AnalyticsHeader: React.FC = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
           <span>Export</span>
-        </button> */}
-      </div>
+        </button> *
+      </div> */}
     </section>
   );
 };

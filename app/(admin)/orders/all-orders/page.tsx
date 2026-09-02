@@ -1,19 +1,29 @@
 "use client";
 
 import MetricCard from "@/components/dashboard/metricCard";
-import { mockSellers, StatusBadge } from "../verification-queue/page";
+import {
+  mockSellers,
+  StatusBadge,
+} from "../../sellers/verification-queue/page";
 import { SearchInput } from "@/components/atoms/searchInputs";
 import { useState } from "react";
 import { PlanProps, SellerRequest } from "@/types/verification";
 import { ActionsMenu } from "@/components/atoms/actionMenu";
 import { ActionsMenuSeller } from "@/components/atoms/actionMenuSeller";
 import { Pagination } from "@/components/atoms/pagination";
-import { useDashboardQuery, useSellersQuery, useSuspendSellerAccount } from "@/lib/queries";
+import {
+  useOrdersQuery,
+  useSellersQuery,
+  useSuspendSellerAccount,
+} from "@/lib/queries";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { SellerReviewItem } from "@/types/seller";
 import { SellerProfile } from "@/components/seller/sellerProfile";
 import { useRouter, useSearchParams } from "next/navigation";
+import { status } from "@/types/order";
+import { formatDateLabelYear } from "@/components/atoms/formatDate";
 import CurrencyFormat from "@/components/atoms/currencyFormat";
+import { ActionsMenuOrder } from "@/components/order/actionMenu";
 
 interface PlanBadgeProps {
   status: PlanProps;
@@ -35,23 +45,18 @@ export const PlanBadge: React.FC<PlanBadgeProps> = ({ status }) => {
   );
 };
 
-const AllSellers = () => {
+const AllOrders = () => {
   const [page, setPage] = useState(1);
-
   const [sellers, setSellers] = useState<SellerReviewItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState<
-    "all" | "active" | "banned" | "suspended"
-  >("all");
-  const [role, setRole] = useState("seller");
-
-
+  const [activeTab, setActiveTab] = useState<status>("all");
+  const [paymentStatus, setPaymentStatus] = useState("");
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-  const { data, isFetching, isError, error } = useSellersQuery(
+  const { data, isLoading, isError, error } = useOrdersQuery(
     page,
     activeTab,
     searchTerm,
-    role,
+    paymentStatus,
   );
 
   const searchParams = useSearchParams();
@@ -64,12 +69,8 @@ const AllSellers = () => {
 
   const handleCloseProfile = () => {
     // Clears the query parameter to return back to the table view
-    router.push("/sellers/all-sellers", { shallow: true } as any);
+    router.push("/orders/all-orders", { shallow: true } as any);
   };
-
-  const active = data?.data?.users?.filter(each => each.accountStatus === "active").length
-  const suspended = data?.data?.users?.filter(each => each.accountStatus === "suspended").length
-  const banned = data?.data?.users?.filter(each => each.accountStatus === "banned").length
 
   const handleSearchChange = (newVal: string) => {
     setSearchTerm(newVal);
@@ -77,21 +78,23 @@ const AllSellers = () => {
   };
 
   const totalPagesCount = data?.data?.pagination?.totalPages || 1;
-
-  const filteredSellers = data?.data?.users?.filter((seller) => {
-    const matchesSearch = seller?.sellerProfile?.businessName
+  console.log(data);
+  const filteredOrders = data?.data?.orders?.filter((order) => {
+    const matchesSearch = order?.buyer?.fullName
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
     const matchesTab =
-      activeTab === "all" || seller?.accountStatus === activeTab;
-      
+      activeTab === "all" ||
+      order?.status.toLowerCase() === activeTab.toLowerCase();
     return matchesSearch && matchesTab;
   });
 
-   const { data: dashboard, isPending } = useDashboardQuery()
+  const totalOrder = data?.data?.orders.length
+  const completed = data?.data?.orders?.filter(each => each.status === "delivered").length
+  const disputed = data?.data?.orders?.filter(each => each.status === "disputed").length 
+  
   const suspendSellerAccout = useSuspendSellerAccount();
   const handleAction = (email: string, id: number, action: string) => {
-  
     if (action === "View profile") {
       return router.push(`/sellers/all-sellers?email=${email}&id=${id}`, {
         shallow: true,
@@ -106,7 +109,7 @@ const AllSellers = () => {
 
   return showProfile ? (
     /* If an ID is in the URL, replace the table completely with the profile */
-    isFetching ? (
+    isLoading ? (
       <div className="flex justify-center items-center h-64">
         <Loader2 className="animate-spin text-gray-400" size={24} />
       </div>
@@ -124,35 +127,63 @@ const AllSellers = () => {
     )
   ) : (
     <div>
+      <div className="mb-5">
+        <h1 className="text-xl font-medium text-dark">All Orders</h1>
+        <p className="text-xs text-navgray mt-0.5">
+          Track and manage all marketplace orders
+        </p>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
         <MetricCard
-          subTitle="Active Sellers"
-          value={active}
+          title="Total Orders"
+          value={totalOrder}
+          valueStyle="text-dark text-xl font-bold"
           divStyle=""
         />
-        <MetricCard subTitle="Suspended" value={suspended} divStyle="" />
-        <MetricCard subTitle="Banned" value={banned} divStyle="" />
         <MetricCard
-          subTitle="Total GMV"
-          value={CurrencyFormat().format(dashboard?.data?.overviewCards?.platformGmv?.valueKobo ?? 0)}
-          
+          title="Completed"
+          value={completed}
+          valueStyle="text-[#00A63E] text-xl font-bold"
+          divStyle=""
+        />
+        <MetricCard
+          title="Disputed"
+          value={disputed}
+          valueStyle="text-[#E7000B] text-xl font-bold"
+          divStyle=""
+        />
+        <MetricCard
+          title="Dispute Rate"
+          value="7"
+          valueStyle="text-[#E17100] text-xl font-bold"
           divStyle=""
         />
       </div>
 
-      <section className="bg-white rounded-lg border border-lightborder p-4 ">
+      <section className="">
+        <SearchInput
+          className="w-full mb-4"
+          padd="py-3 px-4"
+          value={searchTerm}
+          onChange={handleSearchChange}
+        />
         <div className="flex flex-col md:flex-row items-center gap-4 mb-2 pb-2">
           {/* Search */}
-          <SearchInput
-            className="w-full"
-            padd="py-3 px-4"
-            value={searchTerm}
-            onChange={handleSearchChange}
-          />
 
           {/* Tab Filters */}
           <div className="flex items-center gap-2">
-            {(["all", "active", "banned", "suspended"] as const).map((tab) => (
+            {(
+              [
+                "all",
+                "cancelled",
+                "confirmed",
+                "delivered",
+                "disputed",
+                "in_transit",
+                "pending_payment",
+                "picked_up",
+              ] as const
+            ).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -166,11 +197,15 @@ const AllSellers = () => {
               </button>
             ))}
           </div>
+
+          <select className="ml-auto">
+            <option>Highest value</option>
+          </select>
         </div>
 
         {/* Data Table */}
         <div className="overflow-x-auto rounded-lg md:min-h-100">
-          {isFetching ? (
+          {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <Loader2 className="animate-spin text-gray-400" size={24} />
             </div>
@@ -181,65 +216,73 @@ const AllSellers = () => {
             </div>
           ) : (
             <>
-              <table className="min-w-200 md:min-w-auto w-full text-left ">
+              <table className="min-w-200 md:min-w-auto w-full text-left border-collapse border border-lightborder ">
                 <thead>
-                  <tr className="border-b border-[#F5F7FA] text-xs text-lighttext tracking-wider uppercase">
-                    <th className="py-3 font-medium pl-3">Name</th>
-                    <th className="py-3 font-medium">Type</th>
-                    <th className="py-3 font-medium">Location</th>
-                    {/* <th className="py-3 font-medium">Plan</th>
-                  <th className="py-3 font-medium">Gmv</th>
-                  <th className="py-3 font-medium">Orders</th> */}
+                  <tr className="border-b border-[#F5F7FA] text-xs text-lighttext  uppercase">
+                    <th className="py-3 font-medium pl-3">order id</th>
+                    <th className="py-3 font-medium">buyer</th>
+                    <th className="py-3 font-medium">seller</th>
+                    <th className="py-3 font-medium">part</th>
+                    <th className="py-3 font-medium">amount</th>
                     <th className="py-3  font-medium ">Status</th>
+                    <th className="py-3 font-medium">date</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-xs bg-white">
-                  {filteredSellers?.length === 0 ? (
+                  {filteredOrders?.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={7}
                         className="py-8 text-center text-gray-400"
                       >
                         No seller found matching your filters.
                       </td>
                     </tr>
                   ) : (
-                    filteredSellers?.map((seller) => (
+                    filteredOrders?.map((order) => (
                       <tr
-                        key={seller.id}
+                        key={order.id}
                         className="hover:bg-gray-50/50 transition-colors group text-sm border-b border-[#F5F7FA] last:border-0 capitalize"
                       >
                         <td className="pl-3 py-3.5 text-dark font-medium">
-                          {seller?.sellerProfile?.businessName}
+                          {order?.id}
                         </td>
-                        <td className="py-3.5 text-navgray">{seller?.role}</td>
                         <td className="py-3.5 text-navgray">
-                          {/* {seller?.sellerProfile?.address} */}
+                          {order?.buyer.fullName}
                         </td>
-                        {/* <td className="py-3.5 text-navgray">
-                        <PlanBadge status={seller?.plan ?? "Starter"} />
-                      </td> */}
-                        {/* <td className="py-3.5 text-dark font-medium">
-                        {seller.gmv}
-                      </td>
-                      <td className="py-3.5 text-navgray">{seller.orders}</td> */}
+                        <td className="py-3.5 text-navgray">
+                          {/* {order?.address} */}
+                        </td>
+                        <td className="py-3.5 text-navgray">
+                          {/* {order?.items} */}
+                        </td>
+                        <td className="py-3.5 text-dark font-medium">
+                          {CurrencyFormat().format(order?.totalKobo ?? 0)}
+                        </td>
                         <td className="py-3.5">
                           <StatusBadge
-                            width="block w-4/5"
-                            status={seller?.accountStatus}
+                            width="block w-fit"
+                            status={order?.status}
                           />
+                        </td>
+                        <td className="py-3.5 text-navgray">
+                          {formatDateLabelYear(order?.createdAt)}
                         </td>
                         <td className="py-3.5">
                           <div className="">
-                            <ActionsMenuSeller
-                              isOpen={openMenuId === seller?.id}
+                            <ActionsMenuOrder
+                              isOpen={openMenuId === order?.id}
                               onToggle={() =>
                                 setOpenMenuId(
-                                  openMenuId === seller?.id ? null : seller?.id,
+                                  openMenuId === order?.id ? null : order?.id,
                                 )
                               }
                               onAction={(action) =>
-                                handleAction(seller?.email, seller?.id, action)
+                                handleAction(
+                                  order?.buyer.email,
+                                  order?.id,
+                                  action,
+                                )
                               }
                             />
                           </div>
@@ -262,4 +305,4 @@ const AllSellers = () => {
   );
 };
 
-export default AllSellers;
+export default AllOrders;

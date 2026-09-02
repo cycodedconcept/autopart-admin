@@ -1,13 +1,14 @@
 import React from 'react';
+import CurrencyFormat from '../atoms/currencyFormat';
 
 // Strict Type Definition for Seller Records
 export interface SellerItem {
   rank: number;
-  name: string;
+  businessName: string;
   location: string;
-  gmv: string;
-  orders: number;
-  rating: number;
+  grossSalesKobo: number;
+  totalOrders: number;
+  // rate: number;
 }
 
 interface TopSellersTableProps {
@@ -38,13 +39,13 @@ const TopSellersTable: React.FC<TopSellersTableProps> = ({ sellers }) => {
             {sellers.map((seller) => (
               <tr key={seller.rank} className="hover:bg-gray-50/50 transition-colors duration-150 border-b border-[#F5F7FA] last:border-0 ">
                 <td className="py-3 text-center text-navgray ">{seller.rank}</td>
-                <td className="py-3  ">{seller.name}</td>
+                <td className="py-3  ">{seller.businessName}</td>
                 <td className="py-3 text-navgray font-normal">{seller.location}</td>
-                <td className="py-3 text-right">{seller.gmv}</td>
-                <td className="py-3 text-right font-normal text-navgray">{seller.orders}</td>
+                <td className="py-3 text-right">{CurrencyFormat().format(seller.grossSalesKobo ?? 0)}</td>
+                <td className="py-3 text-right font-normal text-navgray">{seller.totalOrders}</td>
                 <td className="py-3 text-right text-[#FE9A00] pr-2">
                   <span className=" mr-0.5">★</span>
-                  {seller.rating.toFixed(1)}
+                  {/* {seller.rank} */}
                 </td>
               </tr>
             ))}

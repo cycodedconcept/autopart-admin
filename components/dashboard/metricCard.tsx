@@ -3,6 +3,7 @@ import { Minus, Plus, TrendingDown, TrendingUp } from "lucide-react";
 
 interface MetricCardProps {
   title?: string;
+  subTitle?: string;
   value?: string | number | null;
   trendType?: "positive" | "negative" | "neutral";
   subtext?: string;
@@ -18,17 +19,19 @@ interface MetricCardProps {
   trendLabel?: string;
   changePercent?: string | number | null;
   titleStyle?: string;
+  valueStyle?: string;
   divStyle?: string;
 }
 
 export default function MetricCard({
   title,
   value,
-  status,
+  subTitle,
   trendImage,
   trendDirection,
   trendLabel,
   changePercent,
+  valueStyle ="text-xl font-bold text-[#0E121B] tracking-tight",
   titleStyle = "text-[11px] text-lighttext tracking-wider",
   divStyle = "flex flex-col justify-between min-h-30"
 }: MetricCardProps) {
@@ -44,9 +47,9 @@ export default function MetricCard({
     <div className={`bg-white p-4 rounded-lg border border-lightborder ${divStyle}`}>
       {/* Top Header Row */}
       <div className="flex items-center justify-between">
-        <span className={`${titleStyle}`}>
+        {title && <span className={`${titleStyle}`}>
           {title}
-        </span>
+        </span>}
 
         {TrendImageComponent && (
           <div className={`${trendImage?.bgColor} p-1.5 rounded`}>
@@ -57,10 +60,13 @@ export default function MetricCard({
 
       {/* Main Metric Value */}
       <div className="my-0.5">
-        <h3 className="text-xl font-bold text-[#0E121B] tracking-tight">
+        <h3 className={valueStyle}>
           {value}
         </h3>
       </div>
+      {subTitle && <p className="text-[11px] text-lighttext">
+        {subTitle}
+        </p>}
 
       {/* Footer Meta Metrics */}
       {trendLabel && (

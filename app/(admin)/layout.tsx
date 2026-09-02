@@ -5,6 +5,7 @@ import TopHeader from "@/components/layout/topHeader";
 import { useMenu } from "@/context/menuContext";
 import { MenuProvider } from "@/context/menuProvider";
 import { useState } from "react";
+import { ToastContainer } from "react-toastify";
 
  function DashboardLayout({
   children,
@@ -33,6 +34,7 @@ import { useState } from "react";
         <main className="p-5 space-y-6 overflow-y-auto">
 
           {children}
+          <ToastContainer/>
         </main>
       </div>
     </div>

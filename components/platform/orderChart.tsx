@@ -1,4 +1,6 @@
-import React from "react";
+'use client';
+
+import React from 'react';
 import {
   BarChart,
   Bar,
@@ -8,41 +10,119 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
-} from "recharts";
+} from 'recharts';
 
-interface WeeklyData {
-  week: string;
-  orderCount: number;
-  revenue: string;
+interface OrderDataNode {
+  orderId: number;
+  orderCode: string;
+  sellerLabel: string;
+  sellerCount: number;
+  totalKobo: number;
+  status: string;
+  paymentStatus: string;
+  createdAt: string; 
+  quantity: number; // 👈 Track item counts from backend payloads
 }
 
-const OrdersBarChart: React.FC = () => {
-  const data: WeeklyData[] = [
-    { week: "Wk 1", orderCount: 42, revenue: "₦652K" },
-    { week: "Wk 2", orderCount: 56, revenue: "₦870K" },
-    { week: "Wk 3", orderCount: 38, revenue: "₦590K" },
-    { week: "Wk 4", orderCount: 74, revenue: "₦1.1M" },
-    { week: "Wk 5", orderCount: 61, revenue: "₦920K" },
-    { week: "Wk 6", orderCount: 89, revenue: "₦1.4M" },
-    { week: "Wk 7", orderCount: 52, revenue: "₦810K" },
-    { week: "Wk 8", orderCount: 45, revenue: "₦690K" },
-  ];
+interface OrdersBarChartProps {
+  data: OrderDataNode[];
+  title?: string;
+  selectedFilter?: '8w' | '60d'; 
+}
 
-  const totalOrders = data.reduce((sum, item) => sum + item.orderCount, 0);
+interface ProcessedWeekBucket {
+  week: string;
+  quantity: number; // 👈 Swapped out from orderCount
+  revenue: string;
+  rawNaira: number;
+  startDate: Date;
+  endDate: Date;
+}
+
+export const OrdersBarChart: React.FC<OrdersBarChartProps> = ({
+  data = [],
+  title = "Orders — Last 8 Weeks",
+  selectedFilter = "8w"
+}) => {
+
+  const koboToNaira = (kobo: number) => kobo / 100;
+
+  const formatNairaAbbreviation = (amount: number) => {
+    if (amount === 0) return '₦0';
+    if (amount >= 1_000_000) return `₦${(amount / 1_000_000).toFixed(1).replace('.0', '')}M`;
+    if (amount >= 1_000) return `₦${(amount / 1_000).toFixed(0)}K`;
+    return `₦${amount.toFixed(0)}`;
+  };
+
+  const getProcessedChartData = (): ProcessedWeekBucket[] => {
+    const buckets: ProcessedWeekBucket[] = [];
+    
+    let anchorDate = new Date();
+    if (data.length > 0) {
+      const timestamps = data.map(d => new Date(d.createdAt).getTime()).filter(t => !isNaN(t));
+      if (timestamps.length > 0) {
+        anchorDate = new Date(Math.max(...timestamps));
+      }
+    }
+
+    for (let i = 7; i >= 0; i--) {
+      const endDate = new Date(anchorDate);
+      endDate.setDate(anchorDate.getDate() - i * 7);
+      
+      const startDate = new Date(endDate);
+      startDate.setDate(endDate.getDate() - 6);
+
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
+
+      buckets.push({
+        week: `Wk ${8 - i}`,
+        quantity: 0, // 👈 Initialized at 0
+        revenue: '₦0',
+        rawNaira: 0,
+        startDate,
+        endDate,
+      });
+    }
+
+    data.forEach((order) => {
+      if (!order.createdAt) return;
+      const orderDate = new Date(order.createdAt);
+
+      const targetBucket = buckets.find(
+        (b) => orderDate >= b.startDate && orderDate <= b.endDate
+      );
+
+      if (targetBucket) {
+        // 👈 Accumulates quantity counts instead of order counts
+        targetBucket.quantity += order.quantity || 0; 
+        targetBucket.rawNaira += koboToNaira(order.totalKobo);
+      }
+    });
+
+    return buckets.map((b) => ({
+      ...b,
+      revenue: formatNairaAbbreviation(b.rawNaira),
+    }));
+  };
+
+  const chartData = getProcessedChartData();
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
-      const currentData = payload[0].payload;
+      const currentData = payload.payload;
+      const dateRangeStr = `${currentData.startDate.toLocaleDateString('en-NG', { day: 'numeric', month: 'short' })} - ${currentData.endDate.toLocaleDateString('en-NG', { day: 'numeric', month: 'short' })}`;
+
       return (
-        <div className="bg-gray-900 text-white p-2 rounded shadow-lg text-[10px] flex flex-col gap-0.5 border border-gray-800">
-          <span className="font-bold text-gray-400 uppercase text-[8px] tracking-wider">
-            {currentData.week} Performance
+        <div className="bg-gray-900 text-white p-2.5 rounded shadow-lg text-[10px] flex flex-col gap-1 border border-gray-800 text-left">
+          <span className="font-bold text-gray-400 uppercase text-[8px] tracking-wider block">
+            {currentData.week} ({dateRangeStr})
           </span>
-          <span className="font-bold text-white text-xs">
-            📦 {currentData.orderCount} Orders
+          <span className="font-semibold text-white text-xs block">
+            🔢 {currentData.quantity} Items Sold
           </span>
-          <span className="text-emerald-400 font-semibold border-t border-gray-700 pt-0.5 mt-0.5">
-            💰 {currentData.revenue} GMV
+          <span className="text-emerald-400 font-semibold border-t border-gray-800 pt-1 mt-0.5 block">
+            💰 {currentData.revenue} GMV Volume
           </span>
         </div>
       );
@@ -51,47 +131,42 @@ const OrdersBarChart: React.FC = () => {
   };
 
   return (
-    <div className="bg-white px-4 py-5 rounded-lg border border-lightborder h-full p-5 flex flex-col justify-between  w-full">
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h3 className="text-sm font-medium text-dark">
-            Orders — Last 8 Weeks
-          </h3>
-        </div>
-        {/* <span className="text-[11px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">
-          Total: {totalOrders}
-        </span> */}
+    <div className="bg-white px-4 py-5 rounded-lg border border-lightborder h-[320px] flex flex-col justify-between w-full font-sans">
+      <div className="flex justify-between items-center mb-4 text-left">
+        <h3 className="text-sm font-medium text-dark">
+          {selectedFilter === '60d' ? "Orders — Last 60 Days" : title}
+        </h3>
       </div>
 
-      <div className="w-full h-full text-[10px] text-lighttext">
+      <div className="w-full flex-1 min-h-0 text-[10px] text-lighttext">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={data}
+            data={chartData}
             margin={{ top: 10, right: 5, left: -25, bottom: 0 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" />
+            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#F0F0F0" />
             <XAxis
               dataKey="week"
-              axisLine={{ stroke: "#666666" }}
-              tickLine={{ stroke: "#666666", strokeWidth: 1 }}
-              
+              axisLine={{ stroke: "#E2E8F0" }}
+              tickLine={false}
               stroke="#99A0AE"
+              dy={5}
             />
-
             <YAxis
-              axisLine={{ stroke: "#666666" }}
-              tickLine={{ stroke: "#666666", strokeWidth: 1 }}
-              domain={[0, "auto"]}
+              axisLine={false}
+              tickLine={false}
+              domain={[0, 'auto']}
               stroke="#99A0AE"
-
+              allowDecimals={false}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: "#f9fafb" }} />
-            {/* FIXED: Added round radius values directly into the property array */}
-            <Bar dataKey="orderCount" radius={[4, 4, 0, 0]} maxBarSize={50}>
-              {data.map((entry, index) => (
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: "#F8FAFC", opacity: 0.5 }} />
+            
+            {/* 👈 FIXED: Pointed dataKey directly to item quantity values */}
+            <Bar dataKey="quantity" radius={[4, 4, 0, 0]} maxBarSize={32}>
+              {chartData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  className="fill-[#7ED321] hover:fill-[#518716] transition-colors duration-200 cursor-pointer"
+                  className="fill-[#7ED321] hover:fill-[#6BB31E] transition-colors duration-200 cursor-pointer"
                 />
               ))}
             </Bar>

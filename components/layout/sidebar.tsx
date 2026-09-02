@@ -79,18 +79,18 @@ const navigationSections: SidebarSection[] = [
       { icon: Users, label: "All sellers", link: "/sellers/all-sellers",
         subTitle: "All sellers"
        },
-      {
-        icon: ProhibitedIcon,
-        label: "Suspended & banned",
-        link: "/sellers/suspended",
-        subTitle: "Suspended & banned",
-      },
-      {
-        icon: TagIcon,
-        label: "Subscription plans",
-        link: "/sellers/subscription-plans",
-        subTitle: "Subscription plans",
-      },
+      // {
+      //   icon: ProhibitedIcon,
+      //   label: "Suspended & banned",
+      //   link: "/sellers/suspended",
+      //   subTitle: "Suspended & banned accounts",
+      // },
+      // {
+      //   icon: TagIcon,
+      //   label: "Subscription plans",
+      //   link: "/sellers/subscription-plans",
+      //   subTitle: "Subscription plans",
+      // },
     ],
   },
   {
@@ -110,18 +110,18 @@ const navigationSections: SidebarSection[] = [
         link: "/orders/disputes",
         subTitle: "Disputes",
       },
-      {
-        icon: Truck,
-        label: "Delivery tracking",
-        link: "/orders/delivery-tracking",
-        subTitle: "Delivery tracking",
-      },
-      {
-        icon: RefreshIcon,
-        label: "Returns management",
-        link: "/orders/returns-management",
-        subTitle: "Returns management",
-      },
+      // {
+      //   icon: Truck,
+      //   label: "Delivery tracking",
+      //   link: "/orders/delivery-tracking",
+      //   subTitle: "Delivery tracking",
+      // },
+      // {
+      //   icon: RefreshIcon,
+      //   label: "Returns management",
+      //   link: "/orders/returns-management",
+      //   subTitle: "Returns management",
+      // },
     ],
   },
   {
@@ -132,9 +132,9 @@ const navigationSections: SidebarSection[] = [
       { icon: BicycleIcon, label: "Riders & logistics", link: "/users/riders",
         subTitle: "Riders & logistics"
        },
-      { icon: Lock, label: "Admin accounts", link: "/users/admin",
-        subTitle: "Admin accounts"
-       },
+      // { icon: Lock, label: "Admin accounts", link: "/users/admin",
+      //   subTitle: "Admin accounts"
+      //  },
     ],
   },
   {
@@ -147,28 +147,28 @@ const navigationSections: SidebarSection[] = [
         link: "/finance/payout-approvals",
         subTitle: "Payout approvals",
       },
-      {
-        icon: FileTextIcon,
-        label: "Transaction log",
-        link: "/finance/transaction-log",
-    subTitle: "Transaction log",
+    //   {
+    //     icon: FileTextIcon,
+    //     label: "Transaction log",
+    //     link: "/finance/transaction-log",
+    // subTitle: "Transaction log",
 
-      },
+    //   },
     ],
   },
   {
     title: "Platform",
     items: [
-      {
-        icon: MegaphoneIcon,
-        label: "Promotions & featured",
-        link: "/platform/promotions",
-      },
-      {
-        icon: MapPinIcon,
-        label: "Logistics partners",
-        link: "/platform/logistics",
-      },
+      // {
+      //   icon: MegaphoneIcon,
+      //   label: "Promotions & featured",
+      //   link: "/platform/promotions",
+      // },
+      // {
+      //   icon: MapPinIcon,
+      //   label: "Logistics partners",
+      //   link: "/platform/logistics",
+      // },
       {
         icon: SettingsGearIcon,
         label: "System settings",
