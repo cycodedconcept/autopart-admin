@@ -71,7 +71,7 @@ export interface DashboardVerificationSeller {
 export interface ActionWithReasonModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (reason: string, type: string) => void;
+  onConfirm: (reason: string, type: string, status?: string) => void;
   title: string;
   description: string;
   type: string;

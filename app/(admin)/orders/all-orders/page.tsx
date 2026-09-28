@@ -1,29 +1,23 @@
 "use client";
 
 import MetricCard from "@/components/dashboard/metricCard";
-import {
-  mockSellers,
-  StatusBadge,
-} from "../../sellers/verification-queue/page";
 import { SearchInput } from "@/components/atoms/searchInputs";
 import { useState } from "react";
-import { PlanProps, SellerRequest } from "@/types/verification";
-import { ActionsMenu } from "@/components/atoms/actionMenu";
-import { ActionsMenuSeller } from "@/components/atoms/actionMenuSeller";
+import { PlanProps } from "@/types/verification";
+
 import { Pagination } from "@/components/atoms/pagination";
 import {
   useOrdersQuery,
-  useSellersQuery,
-  useSuspendSellerAccount,
+ 
 } from "@/lib/queries";
 import { AlertCircle, Loader2 } from "lucide-react";
-import { SellerReviewItem } from "@/types/seller";
-import { SellerProfile } from "@/components/seller/sellerProfile";
 import { useRouter, useSearchParams } from "next/navigation";
 import { status } from "@/types/order";
 import { formatDateLabelYear } from "@/components/atoms/formatDate";
 import CurrencyFormat from "@/components/atoms/currencyFormat";
 import { ActionsMenuOrder } from "@/components/order/actionMenu";
+import OrderDetails from "@/components/order/orderDetails";
+import { StatusBadge } from "@/components/atoms/statusBadge";
 
 interface PlanBadgeProps {
   status: PlanProps;
@@ -47,7 +41,6 @@ export const PlanBadge: React.FC<PlanBadgeProps> = ({ status }) => {
 
 const AllOrders = () => {
   const [page, setPage] = useState(1);
-  const [sellers, setSellers] = useState<SellerReviewItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<status>("all");
   const [paymentStatus, setPaymentStatus] = useState("");
@@ -61,12 +54,8 @@ const AllOrders = () => {
 
   const searchParams = useSearchParams();
   const router = useRouter();
-
-  // Extract the 'id' parameter from the URL query string (e.g., ?id=seller_123)
-  const selectedSellerEmail = searchParams.get("email");
   const selectedSellerId = Number(searchParams.get("id"));
-  const showProfile = Boolean(selectedSellerEmail);
-
+  const showProfile = Boolean(selectedSellerId);
   const handleCloseProfile = () => {
     // Clears the query parameter to return back to the table view
     router.push("/orders/all-orders", { shallow: true } as any);
@@ -78,7 +67,6 @@ const AllOrders = () => {
   };
 
   const totalPagesCount = data?.data?.pagination?.totalPages || 1;
-  console.log(data);
   const filteredOrders = data?.data?.orders?.filter((order) => {
     const matchesSearch = order?.buyer?.fullName
       .toLowerCase()
@@ -92,19 +80,13 @@ const AllOrders = () => {
   const totalOrder = data?.data?.orders.length
   const completed = data?.data?.orders?.filter(each => each.status === "delivered").length
   const disputed = data?.data?.orders?.filter(each => each.status === "disputed").length 
-  
-  const suspendSellerAccout = useSuspendSellerAccount();
+
   const handleAction = (email: string, id: number, action: string) => {
-    if (action === "View profile") {
-      return router.push(`/sellers/all-sellers?email=${email}&id=${id}`, {
+    if (action === "View details") {
+      return router.push(`/orders/all-orders?id=${id}`, {
         shallow: true,
       } as any);
-    } else if (action === "Suspend") {
-      suspendSellerAccout.mutate({
-        id: id,
-        status: "suspended",
-      });
-    }
+    } 
   };
 
   return showProfile ? (
@@ -119,9 +101,9 @@ const AllOrders = () => {
         <span>{error?.message || "Failed to load lists"}</span>
       </div>
     ) : (
-      <SellerProfile
-        sellerEmail={selectedSellerEmail!}
-        sellerId={selectedSellerId!}
+      <OrderDetails
+        
+        orderId={selectedSellerId!}
         onClose={handleCloseProfile}
       />
     )
@@ -167,8 +149,8 @@ const AllOrders = () => {
           value={searchTerm}
           onChange={handleSearchChange}
         />
-        <div className="flex flex-col md:flex-row items-center gap-4 mb-2 pb-2">
-          {/* Search */}
+        <div className="flex flex-row items-center gap-4 mb-2 pb-2 overflow-x-auto">
+       
 
           {/* Tab Filters */}
           <div className="flex items-center gap-2">
@@ -204,7 +186,7 @@ const AllOrders = () => {
         </div>
 
         {/* Data Table */}
-        <div className="overflow-x-auto rounded-lg md:min-h-100">
+        <div className="overflow-x-auto rounded-lg md:min-h-100 border border-lightborder">
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <Loader2 className="animate-spin text-gray-400" size={24} />
@@ -216,13 +198,13 @@ const AllOrders = () => {
             </div>
           ) : (
             <>
-              <table className="min-w-200 md:min-w-auto w-full text-left border-collapse border border-lightborder ">
+              <table className="min-w-200 md:min-w-auto w-full text-left border-collapse ">
                 <thead>
                   <tr className="border-b border-[#F5F7FA] text-xs text-lighttext  uppercase">
                     <th className="py-3 font-medium pl-3">order id</th>
                     <th className="py-3 font-medium">buyer</th>
                     <th className="py-3 font-medium">seller</th>
-                    <th className="py-3 font-medium">part</th>
+                    <th className="py-3 font-medium">pay status</th>
                     <th className="py-3 font-medium">amount</th>
                     <th className="py-3  font-medium ">Status</th>
                     <th className="py-3 font-medium">date</th>
@@ -250,14 +232,14 @@ const AllOrders = () => {
                         <td className="py-3.5 text-navgray">
                           {order?.buyer.fullName}
                         </td>
-                        <td className="py-3.5 text-navgray">
-                          {/* {order?.address} */}
+                        <td className="py-3.5 text-navgray ">
+                          {order?.seller?.businessName}
                         </td>
                         <td className="py-3.5 text-navgray">
-                          {/* {order?.items} */}
+                          {<StatusBadge status= {order?.paymentStatus}/>}
                         </td>
                         <td className="py-3.5 text-dark font-medium">
-                          {CurrencyFormat().format(order?.totalKobo ?? 0)}
+                          {CurrencyFormat(order?.totalKobo ?? 0)}
                         </td>
                         <td className="py-3.5">
                           <StatusBadge

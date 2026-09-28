@@ -32,7 +32,7 @@ export default function Overview({
   const type = user?.role;
   // Mock data representing the top summary blocks
   const summaryData: SummaryCardProps[] = [
-    { label: "GMV", value: CurrencyFormat().format(gmv) ?? 0 },
+    { label: "GMV", value: CurrencyFormat(gmv) ?? 0 },
     { label: "Orders", value: totalOrders },
     { label: "Type", value: type },
     { label: "Plan", value: "Pro" },

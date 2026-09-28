@@ -1,11 +1,23 @@
 import { DashboardAlerts } from "@/types/dashboard";
 import { Info } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function AlertBanner({
   data,
 }: {
   data: DashboardAlerts | undefined;
 }) {
+  const router = useRouter();
+  const handleReview = () => {
+    if (!!data?.pendingVerifications?.count) {
+      router.push("/sellers/verification-queue");
+    } else if (!!data?.openDisputes.urgentCount) {
+      router.push("/orders/disputes");
+    } else {
+      router.push("/finance/payout-approvals");
+    }
+  };
+
   return (
     (!!data?.pendingVerifications.count ||
       !!data?.openDisputes.urgentCount ||
@@ -46,7 +58,10 @@ export default function AlertBanner({
           </div>
 
           {/* Action Trigger */}
-          <button className="text-xs font-medium text-[#A32D2D] underline hover:text-red-900 transition-colors shrink-0 ml-4">
+          <button
+            className="text-xs font-medium text-[#A32D2D] underline hover:text-red-500 transition-colors shrink-0 ml-4 cursor-pointer"
+            onClick={handleReview}
+          >
             Review now
           </button>
         </div>

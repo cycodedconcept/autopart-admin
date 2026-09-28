@@ -10,6 +10,7 @@ import {
   ChevronRight,
   X,
   Lock,
+  MessageCircle,
 } from "lucide-react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -20,10 +21,6 @@ import {
   BicycleIcon,
   BrowserBotIcon,
   FileTextIcon,
-  MapPinIcon,
-  MegaphoneIcon,
-  ProhibitedIcon,
-  RefreshIcon,
   SettingsGearIcon,
   ShieldCheckIcon,
   ShoppingCartIcon,
@@ -32,6 +29,7 @@ import {
   WalletIcon,
 } from "../atoms/Icons";
 import Link from "next/link";
+import { useAuthStore } from "@/store/authStore";
 
 interface SidebarItem {
   icon: React.ComponentType<{ size: number; color: string }>;
@@ -67,7 +65,7 @@ const navigationSections: SidebarSection[] = [
   },
   {
     title: "Sellers",
-   
+
     items: [
       {
         icon: ShieldCheckIcon,
@@ -76,9 +74,12 @@ const navigationSections: SidebarSection[] = [
         link: "/sellers/verification-queue",
         subTitle: "Verification queue",
       },
-      { icon: Users, label: "All sellers", link: "/sellers/all-sellers",
-        subTitle: "All sellers"
-       },
+      {
+        icon: Users,
+        label: "All sellers",
+        link: "/sellers/all-sellers",
+        subTitle: "All sellers",
+      },
       // {
       //   icon: ProhibitedIcon,
       //   label: "Suspended & banned",
@@ -95,7 +96,7 @@ const navigationSections: SidebarSection[] = [
   },
   {
     title: "Orders",
-   
+
     items: [
       {
         icon: ShoppingCartIcon,
@@ -126,12 +127,15 @@ const navigationSections: SidebarSection[] = [
   },
   {
     title: "Users",
-  
+
     items: [
-      { icon: UserSingleIcon, label: "Buyers", link: "/users/buyers", subTitle: "Buyers" },
-      { icon: BicycleIcon, label: "Riders & logistics", link: "/users/riders",
-        subTitle: "Riders & logistics"
-       },
+      // { icon: UserSingleIcon, label: "Buyers", link: "/users/buyers", subTitle: "Buyers" },
+      {
+        icon: BicycleIcon,
+        label: "Riders & logistics",
+        link: "/users/riders-logistics",
+        subTitle: "Riders & logistics",
+      },
       // { icon: Lock, label: "Admin accounts", link: "/users/admin",
       //   subTitle: "Admin accounts"
       //  },
@@ -147,13 +151,39 @@ const navigationSections: SidebarSection[] = [
         link: "/finance/payout-approvals",
         subTitle: "Payout approvals",
       },
-    //   {
-    //     icon: FileTextIcon,
-    //     label: "Transaction log",
-    //     link: "/finance/transaction-log",
-    // subTitle: "Transaction log",
+      //   {
+      //     icon: FileTextIcon,
+      //     label: "Transaction log",
+      //     link: "/finance/transaction-log",
+      // subTitle: "Transaction log",
 
-    //   },
+      //   },
+    ],
+  },
+  {
+    title: "Content",
+    items: [
+      {
+        icon: FileTextIcon,
+        label: "Blog posts",
+        link: "/content/blog-posts",
+        subTitle: "Blog Posts",
+      },
+    
+      {
+        icon: TagIcon,
+        label: "Categories & tags",
+        link: "/content/categories",
+        subTitle: "Categories & tags",
+      },
+      {
+        icon: MessageCircle,
+        label: "Comments",
+        badge: 3,
+        link: "/content/comments",
+        subTitle: "Comments",
+      },
+      
     ],
   },
   {
@@ -188,6 +218,19 @@ export default function Sidebar({
   const pathname = usePathname();
   const { setShowSidebar } = useMenu();
   const { setActive } = useMenu();
+  const user = useAuthStore((state) => state.user);
+  const getUser = user?.fullName.split(" ");
+  let initials;
+  if (getUser) {
+    if (getUser.length > 1) {
+      const first = getUser[0][0].toUpperCase();
+      const second = getUser[1][0].toUpperCase();
+      initials = first + second;
+    } else {
+      const first = getUser[0][0].toUpperCase();
+      initials = first;
+    }
+  }
 
   return (
     <aside
@@ -284,20 +327,19 @@ export default function Sidebar({
 
       {/* User Footer Profile */}
       <div className="p-3 border-t border-slate-100 flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden shrink-0">
-          <img
+        <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden shrink-0 flex items-center justify-center text-orange-500 font-semibold text-lg">
+          {/* <img
             src="/avatar.png"
             alt="User avatar"
             className="w-full h-full object-cover"
-          />
+          /> */}
+          {initials}
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold text-slate-800 truncate">
-            Alex Reynolds
+            {user?.fullName}
           </p>
-          <p className="text-[10px] text-slate-400 truncate">
-            admin@autoparts.ng
-          </p>
+          <p className="text-[10px] text-slate-400 truncate">{user?.email}</p>
         </div>
       </div>
     </aside>

@@ -15,7 +15,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   onChange,
   leftSide = false,
   padd ="pl-3 pr-3 py-2",
-  placeholder = "Search sellers...",
+  placeholder = "Search name...",
   className = "w-full md:w-72"
 }) => {
   return (

@@ -1,36 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
-const AnalyticsHeader: React.FC = () => {
+const AnalyticsHeader: React.FC<{
+  selectedFilter: string;
+  onFilterChange: (range: string) => void;
+}> = ({ selectedFilter, onFilterChange }) => {
   // State to track the currently selected day/time pill range
-  const [activeRange, setActiveRange] = useState<string>('50d');
+
 
   const ranges = [
-    { label: '7d', value: '7d' },
-    { label: '50d', value: '50d' },
-    { label: '90d', value: '90d' },
-    { label: '1y', value: '1y' }
+    { label: "7d", value: "7d" },
+    { label: "30d", value: "30d" },
+    { label: "90d", value: "90d" },
+    { label: "1y", value: "1y" },
   ];
 
   return (
     <section className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 ">
       {/* Platform Text Left Element */}
-      <div className=''>
+      <div className="">
         <h1 className="text-xl font-medium text-dark">Platform Analytics</h1>
-        <p className="text-sm text-navgray mt-0.5">Overview of marketplace performance</p>
+        <p className="text-sm text-navgray mt-0.5">
+          Overview of marketplace performance
+        </p>
       </div>
 
       {/* Days Pill Picker & Actions Right Element */}
-      {/* <div className="flex items-center gap-3 self-stretch sm:self-auto">
-        {/* Days Pill Selector Grid *
+      <div className="flex items-center gap-3 self-stretch sm:self-auto">
+        {/* Days Pill Selector Grid */}
         <div className="flex p-1 gap-4">
           {ranges.map((range) => (
             <button
               key={range.value}
-              onClick={() => setActiveRange(range.value)}
+            onClick={() => onFilterChange(range.value)}
               className={`px-3 py-1 text-sm cursor-pointer font-medium rounded-full transition-all duration-200 border border-lightborder ${
-                activeRange === range.value
-                  ? 'bg-aorange text-white '
-                  : 'text-navgray bg-white hover:text-gray-900'
+                selectedFilter === range.value
+                  ? "bg-aorange text-white "
+                  : "text-navgray bg-white hover:text-gray-900"
               }`}
             >
               {range.label}
@@ -45,8 +50,8 @@ const AnalyticsHeader: React.FC = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
           <span>Export</span>
-        </button> *
-      </div> */}
+        </button>  */}
+      </div>
     </section>
   );
 };

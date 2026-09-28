@@ -32,9 +32,8 @@ const RecentOrders = ({ data = [] }: RecentOrdersCardProps) => {
   return (
     <CardWrapper
       title="Recent orders"
-      
-      
     >
+      {data.length === 0 ? <p className="text-center text-light-gray">No data available</p>:
       <table className="w-full text-left border-collapse min-w-125">
         <thead>
           <tr className="text-[10px] uppercase font-medium text-lighttext border-b border-[#F5F7FA]">
@@ -62,7 +61,7 @@ const RecentOrders = ({ data = [] }: RecentOrdersCardProps) => {
             </tr>
           ))}
         </tbody>
-      </table>
+      </table>}
     </CardWrapper>
   );
 };

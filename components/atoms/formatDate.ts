@@ -12,4 +12,11 @@ export const formatDateLabel = (isoString: string) => {
     ('en-NG', {  year: "numeric" , month: 'numeric',day: 'numeric'})
   };
 
+  export const formatDateLabelYearTime = (isoString: string) => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    return date.toLocaleDateString
+    ('en-NG', {  year: "numeric" , month: 'numeric',day: 'numeric', hour: '2-digit', minute: '2-digit' })
+  };
+
   

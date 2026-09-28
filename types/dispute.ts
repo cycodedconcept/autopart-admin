@@ -28,6 +28,11 @@ export interface Dispute {
   raisedBySeller: DisputeSeller | null;
   resolvedByAdmin: any | null; // Replace 'any' if you have an admin structure
   sellers: DisputeSeller[];
+  disputeId: number;
+  buyerName: string;
+  sellerBusinessName: string;
+  openedAt: string;
+  slaRemainingMinutes: number;
 }
 
 export interface DisputeOrder {
@@ -59,6 +64,17 @@ export interface DisputeSeller {
   phone: string;
 }
 
+export interface IOrder {
+  id: number;
+  status: string;
+  paymentMethod: string;
+  paymentReference: string;
+  paymentStatus: string;
+  totalKobo: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Pagination {
   page: number;
   limit: number;
@@ -70,4 +86,15 @@ export interface DisputeFilters {
   status: string | null;
   raisedBy: string | null;
   search: string | null;
+}
+
+export interface DisputeDetailsResponse {
+  success: boolean;
+  data: Dispute;
+  message: string;
+}
+export interface DisputeListResponse {
+  success: boolean;
+  data: Dispute[];
+  message: string;
 }

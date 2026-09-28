@@ -19,6 +19,7 @@ export interface PlatformHealth {
 export const PlatformHealth = ({ metrics = [] }: {metrics: RevenueMix[]}) => {
   return (
     <CardWrapper title="Platform health">
+      {metrics.length === 0 ? <p className="text-center text-light-gray">No data available</p>:
       <div className="flex flex-col divide-y divide-[#F5F7FA]">
         {metrics.map((metric, idx) => (
           <div
@@ -29,11 +30,11 @@ export const PlatformHealth = ({ metrics = [] }: {metrics: RevenueMix[]}) => {
               {metric.label}
             </span>
             <span className="text-sm text-dark font-medium">
-              {CurrencyFormat().format(metric.amountKobo)}
+              {CurrencyFormat(metric.amountKobo)}
             </span>
           </div>
         ))}
-      </div>
+      </div>}
     </CardWrapper>
   );
 };

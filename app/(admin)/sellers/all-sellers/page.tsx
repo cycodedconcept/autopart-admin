@@ -1,11 +1,11 @@
 "use client";
 
 import MetricCard from "@/components/dashboard/metricCard";
-import { mockSellers, StatusBadge } from "../verification-queue/page";
+
 import { SearchInput } from "@/components/atoms/searchInputs";
 import { useState } from "react";
-import { PlanProps, SellerRequest } from "@/types/verification";
-import { ActionsMenu } from "@/components/atoms/actionMenu";
+import { PlanProps } from "@/types/verification";
+
 import { ActionsMenuSeller } from "@/components/atoms/actionMenuSeller";
 import { Pagination } from "@/components/atoms/pagination";
 import { useDashboardQuery, useSellersQuery, useSuspendSellerAccount } from "@/lib/queries";
@@ -14,6 +14,7 @@ import { SellerReviewItem } from "@/types/seller";
 import { SellerProfile } from "@/components/seller/sellerProfile";
 import { useRouter, useSearchParams } from "next/navigation";
 import CurrencyFormat from "@/components/atoms/currencyFormat";
+import { StatusBadge } from "@/components/atoms/statusBadge";
 
 interface PlanBadgeProps {
   status: PlanProps;
@@ -38,7 +39,6 @@ export const PlanBadge: React.FC<PlanBadgeProps> = ({ status }) => {
 const AllSellers = () => {
   const [page, setPage] = useState(1);
 
-  const [sellers, setSellers] = useState<SellerReviewItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<
     "all" | "active" | "banned" | "suspended"
@@ -88,7 +88,7 @@ const AllSellers = () => {
     return matchesSearch && matchesTab;
   });
 
-   const { data: dashboard, isPending } = useDashboardQuery()
+   const { data: dashboard } = useDashboardQuery()
   const suspendSellerAccout = useSuspendSellerAccount();
   const handleAction = (email: string, id: number, action: string) => {
   
@@ -134,7 +134,7 @@ const AllSellers = () => {
         <MetricCard subTitle="Banned" value={banned} divStyle="" />
         <MetricCard
           subTitle="Total GMV"
-          value={CurrencyFormat().format(dashboard?.data?.overviewCards?.platformGmv?.valueKobo ?? 0)}
+          value={CurrencyFormat(dashboard?.data?.overviewCards?.platformGmv?.valueKobo ?? 0)}
           
           divStyle=""
         />
@@ -181,7 +181,7 @@ const AllSellers = () => {
             </div>
           ) : (
             <>
-              <table className="min-w-200 md:min-w-auto w-full text-left ">
+              <table className="min-w-150 md:min-w-auto w-full text-left ">
                 <thead>
                   <tr className="border-b border-[#F5F7FA] text-xs text-lighttext tracking-wider uppercase">
                     <th className="py-3 font-medium pl-3">Name</th>

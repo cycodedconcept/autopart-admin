@@ -27,7 +27,7 @@ export const SellerDetailProfile: React.FC<{
   const { data } = useVerificationQuery(1, "all");
  
   const business = data?.data?.sellers[0];
-  const [isFlagModalOpen, setIsFlagModalOpen] = useState(false);
+
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [previewTitle, setPreviewTitle] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
@@ -52,8 +52,7 @@ export const SellerDetailProfile: React.FC<{
   const rejectVerification = useRejectVerification();
 
   const handleOpenDocPreview = (title: string, rawUrl: string) => {
-    console.log("Opening preview for:", title, rawUrl);
-
+    
     setPreviewTitle(title);
     setPreviewUrl(rawUrl); // Cache the raw server path into state
     setIsPreviewModalOpen(true);

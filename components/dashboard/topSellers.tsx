@@ -17,17 +17,18 @@ export interface TopSellersItem {
 export const TopSellers = ({ data = [] }: { data: TopSellersItem[] }) => {
   return (
     <CardWrapper title="Top sellers this month">
+      {data.length === 0 ? <p className="text-center text-light-gray">No data available</p>:
       <div className="flex flex-col divide-y divide-gray-50">
         {data.map((seller, idx) => {
           const getSeller = seller.fullName.split(" ");
           let initials;
           if (getSeller) {
             if (getSeller.length > 1) {
-              const first = getSeller[0][0];
-              const second = getSeller[1][0];
+              const first = getSeller[0][0].toUpperCase();
+              const second = getSeller[1][0].toUpperCase();
               initials = first + second;
             } else {
-              const first = getSeller[0][0];
+              const first = getSeller[0][0].toUpperCase();
               initials = first;
             }
           }
@@ -53,12 +54,12 @@ export const TopSellers = ({ data = [] }: { data: TopSellersItem[] }) => {
                 </div>
               </div>
               <span className="text-sm font-medium text-lighter-green">
-                {CurrencyFormat().format(seller.grossSalesKobo ?? 0)}
+                {CurrencyFormat(seller.grossSalesKobo ?? 0)}
               </span>
             </div>
           );
         })}
-      </div>
+      </div>}
     </CardWrapper>
   );
 };

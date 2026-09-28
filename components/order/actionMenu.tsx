@@ -25,33 +25,14 @@ export const ActionsMenuOrder: React.FC<ActionsMenuProps> = ({
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                onAction("View profile");
+                onAction("View details");
                 onToggle();
               }}
               className="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2 cursor-pointer"
             >
               View details
             </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onAction("Suspend");
-                onToggle();
-              }}
-              className="w-full text-left px-3 py-2 hover:bg-gray-50  flex items-center gap-2 cursor-pointer"
-            >
-              Flag order
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onAction("Change plan");
-                onToggle();
-              }}
-              className="w-full text-left px-3 py-2 hover:bg-gray-50 text-[#E7000B] flex items-center gap-2 cursor-pointer"
-            >
-              Cancel order
-            </button>
+            
             
           </div>
         </>

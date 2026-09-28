@@ -21,6 +21,7 @@ export const OpenDisputes = ({ data = [], onViewAll }: OpenDisputesCardProps) =>
   return (
     
     <CardWrapper title="Open disputes" actionLabel="View all" onActionClick={onViewAll}>
+      {data.length === 0 ? <p className="text-center text-light-gray">No open dispute</p>:
       <table className="w-full text-left border-collapse min-w-125">
         <thead>
           <tr className="text-[10px] uppercase font-medium text-lighttext border-b border-[#F5F7FA]">
@@ -44,7 +45,7 @@ export const OpenDisputes = ({ data = [], onViewAll }: OpenDisputesCardProps) =>
             </tr>
           ))}
         </tbody>
-      </table>
+      </table>}
     </CardWrapper>
   );
 };

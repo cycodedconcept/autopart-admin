@@ -5,6 +5,7 @@ import {
   useMutation,
   keepPreviousData,
   useQueryClient,
+  UseQueryOptions,
 } from "@tanstack/react-query";
 import {
   loginUser,
@@ -17,16 +18,31 @@ import {
   approveSeller,
   rejectSeller,
   fetchDisputes,
+  fetchSingleOrder,
+  platformAnalytics,
+  updateOrderStatus,
+  fetchSingleDispute,
+  updateDisputeStatus,
+  fetchCompaniesRiders,
+  fetchCompanies,
+  onboardPartnerRequest,
+  approveLogisticCompany,
+  getPayouts,
+  updatePayout,
 } from "./api";
 import { useAuthStore } from "@/store/authStore";
 import { ApiErrorPayload, AuthUserResponse, LoginFormData } from "@/types/auth";
 import { toast } from "react-toastify";
+import { FetchRidersResponse } from "@/types/rider";
+import { FetchCompaniesResponse, OnboardPartnerPayload } from "@/types/company";
 
 // 🔑 Centralized cache tracking keys
 export const QUERY_KEYS = {
   inventory: ["inventory"] as const,
   dashboard: ["dashboard"] as const,
   warehouseDetails: (id: string) => ["inventory", id] as const,
+  platformAnalytics: (token: string | null) =>
+    ["platformAnalytics", token] as const,
 };
 
 export function login() {
@@ -60,6 +76,25 @@ export function useDashboardQuery() {
 
     // Pass the token safely into the function execution
     queryFn: () => fetchDashboardItems(token),
+
+    // 🛑 BLOCKER: Prevents the API request from running if token is null
+    enabled: !!token,
+
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+export function usePlatformAnalyticsQuery(
+  period: string,
+  topSellersLimit: number | null,
+) {
+  const token = useAuthStore((state) => state.token);
+
+  return useQuery({
+    queryKey: ["platformAnalytics", { token, period, topSellersLimit }],
+
+    // Pass the token safely into the function execution
+    queryFn: () => platformAnalytics(token, period, topSellersLimit),
 
     // 🛑 BLOCKER: Prevents the API request from running if token is null
     enabled: !!token,
@@ -231,19 +266,14 @@ export const useOrdersQuery = (
   });
 };
 
-export const useDisputesQuery = (
-  page?: number,
-  status?: string,
-  search?: string,
-  raisedBy?: string,
-) => {
+export const useSingleOrderQuery = (orderId: number) => {
   const token = useAuthStore((state) => state.token);
   return useQuery({
     // 1. Sync Driver: The key registers variables as absolute dependencies
-    queryKey: ["disputes", { page, status, search, raisedBy }],
+    queryKey: ["orders", { orderId }],
 
     // 2. Resolver: Automatically passes changing keys into your API client call
-    queryFn: () => fetchDisputes(token, page!, status!, search!, raisedBy!),
+    queryFn: () => fetchSingleOrder(token, orderId),
 
     // 3. UX Optimization: Prevents the UI layout from flickering/blanking out during fetches
     placeholderData: keepPreviousData,
@@ -253,3 +283,258 @@ export const useDisputesQuery = (
     staleTime: 5000,
   });
 };
+
+export const useOrderStatusQuery = () => {
+  const queryClient = useQueryClient();
+  const token = useAuthStore((state) => state.token);
+
+  return useMutation({
+    mutationFn: ({
+      orderId,
+      status,
+      note,
+    }: {
+      orderId: number;
+      status: string;
+      note: string;
+    }) => updateOrderStatus(token, orderId, status, note),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+
+      if (data?.message) {
+        toast.success(data.message);
+      }
+    },
+    onError: (error: any) => {
+      const errMsg = error?.message || "An error occurred";
+      toast.error(errMsg);
+    },
+  });
+};
+
+export const useDisputesQuery = (
+  page?: number,
+  status?: string,
+  search?: string,
+  raisedBy?: string,
+  sellerId?: string,
+  dateFrom?: string,
+  dateTo?: string,
+) => {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    // 1. Sync Driver: The key registers variables as absolute dependencies
+    queryKey: [
+      "disputes",
+      { page, status, search, raisedBy, sellerId, dateFrom, dateTo },
+    ],
+
+    // 2. Resolver: Automatically passes changing keys into your API client call
+    queryFn: () =>
+      fetchDisputes(
+        token,
+        page!,
+        status!,
+        search!,
+        raisedBy!,
+        sellerId!,
+        dateFrom!,
+        dateTo!,
+      ),
+
+    // 3. UX Optimization: Prevents the UI layout from flickering/blanking out during fetches
+    placeholderData: keepPreviousData,
+    enabled: !!token,
+
+    // Optional: Tailor cache lifetimes based on how fluid your queue data shifts
+    staleTime: 5000,
+  });
+};
+
+export const useSingleDisputeQuery = (disputeId: number) => {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    // 1. Sync Driver: The key registers variables as absolute dependencies
+    queryKey: ["disputes", { disputeId }],
+
+    // 2. Resolver: Automatically passes changing keys into your API client call
+    queryFn: () => fetchSingleDispute(token, disputeId),
+
+    // 3. UX Optimization: Prevents the UI layout from flickering/blanking out during fetches
+    placeholderData: keepPreviousData,
+    enabled: !!token,
+
+    // Optional: Tailor cache lifetimes based on how fluid your queue data shifts
+    staleTime: 5000,
+  });
+};
+
+export const useDisputeStatusQuery = () => {
+  const queryClient = useQueryClient();
+  const token = useAuthStore((state) => state.token);
+
+  return useMutation({
+    mutationFn: ({
+      disputeId,
+      status,
+      note,
+    }: {
+      disputeId: number;
+      status: string;
+      note: string;
+    }) => updateDisputeStatus(token, disputeId, status, note),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["disputes"] });
+
+      if (data?.message) {
+        toast.success(data.message);
+      }
+    },
+    onError: (error: any) => {
+      const errMsg = error?.message || "An error occurred";
+      toast.error(errMsg);
+    },
+  });
+};
+
+//riders and logistics
+export const useCompanyQuery = (
+  page?: number,
+  status?: string,
+  search?: string,
+  options?: Omit<
+    UseQueryOptions<FetchCompaniesResponse, Error>,
+    "queryKey" | "queryFn"
+  >,
+) => {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    // 1. Sync Driver: The key registers variables as absolute dependencies
+    queryKey: ["logistics", { page, status, search }],
+
+    // 2. Resolver: Automatically passes changing keys into your API client call
+    queryFn: () => fetchCompanies(token, page!, status!, search!),
+    ...options,
+    // 3. UX Optimization: Prevents the UI layout from flickering/blanking out during fetches
+    placeholderData: keepPreviousData,
+    enabled: !!token,
+
+    // Optional: Tailor cache lifetimes based on how fluid your queue data shifts
+    staleTime: 5000,
+  });
+};
+
+export const useCompanyRiderQuery = (
+  page?: number,
+  status?: string,
+  companyId?: string | null,
+  options?: Omit<
+    UseQueryOptions<FetchRidersResponse, Error>,
+    "queryKey" | "queryFn"
+  >,
+) => {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    // 1. Sync Driver: The key registers variables as absolute dependencies
+    queryKey: ["riders", { page, status, companyId }],
+
+    // 2. Resolver: Automatically passes changing keys into your API client call
+    queryFn: () => fetchCompaniesRiders(token, page!, status!, companyId!),
+    ...options,
+    // 3. UX Optimization: Prevents the UI layout from flickering/blanking out during fetches
+    placeholderData: keepPreviousData,
+    enabled: !!token,
+
+    // Optional: Tailor cache lifetimes based on how fluid your queue data shifts
+    staleTime: 5000,
+  });
+};
+
+export const useOnboardPartnerMutation = () => {
+  const queryClient = useQueryClient();
+  const token = useAuthStore((state) => state.token);
+
+  return useMutation({
+    mutationFn: 
+  (data: OnboardPartnerPayload) => onboardPartnerRequest(data, token),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["logistics"] });
+
+      if (data?.message) {
+        toast.success(data.message);
+      }
+    },
+    onError: (error: any) => {
+      const errMsg = error?.message || "An error occurred";
+      toast.error(errMsg);
+    },
+  });
+};
+
+export const useApproveLogisticCompany = () => {
+  const queryClient = useQueryClient();
+  const token = useAuthStore((state) => state.token);
+
+  return useMutation({
+    // Receive variables dynamically right here 🎯
+    mutationFn: ({ id, status }: { id: number; status: string }) =>
+      approveLogisticCompany({ token, id, status }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["logistics"] });
+
+      if (data?.message) {
+        toast.success(data.message);
+      }
+    },
+    onError: (error: any) => {
+      const errMsg = error?.message || "An error occurred";
+      toast.error(errMsg);
+    },
+  });
+};
+
+//payouts
+export const usePayoutsQuery = (
+  page?: number,
+  status?: string,
+  payeeType?: string,
+  search?: string,
+  companyId?: number | null,
+  sellerId?: number | null,) => {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    // 1. Sync Driver: The key registers variables as absolute dependencies
+    queryKey: ["payouts", { page, status, payeeType, search, companyId, sellerId }],
+    // 2. Resolver: Automatically passes changing keys into your API client call
+    queryFn: () => getPayouts({ token, page, status, payeeType, search, companyId, sellerId }),
+    // 3. UX Optimization: Prevents the UI layout from flickering/blanking out during fetches
+    placeholderData: keepPreviousData,
+    enabled: !!token,
+    // Optional: Tailor cache lifetimes based on how fluid your queue data shifts
+    staleTime: 5000,
+  });
+}
+
+export const useUpdatePayoutMutation = () => {
+  const queryClient = useQueryClient();
+  const token = useAuthStore((state) => state.token);
+
+  return useMutation({
+    // Receive variables dynamically right here 🎯
+    mutationFn: ({ id, status, note }: { id: number; status: string; note?: string }) =>
+      updatePayout( token, id, status, note ),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["payouts"] });
+
+      if (data?.message) {
+        toast.success(data.message);
+      }
+    },
+    onError: (error: any) => {
+      const errMsg = error?.message || "An error occurred";
+      toast.error(errMsg);
+    },
+  });
+};
+
+

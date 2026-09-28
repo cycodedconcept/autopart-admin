@@ -32,6 +32,7 @@ export const RecentActivity = ({
   };
   return (
     <CardWrapper title="Recent activity">
+      {activities.length === 0 ? <p className="text-center text-light-gray">No data available</p>:
       <div className="relative flex flex-col pl-4 space-y-5 py-2">
         {activities.map((activity, idx) => {
           return (
@@ -48,7 +49,7 @@ export const RecentActivity = ({
             </div>
           );
         })}
-      </div>
+      </div>}
     </CardWrapper>
   );
 };

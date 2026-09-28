@@ -1,6 +1,3 @@
-// ==========================================
-// 1. Shared & Reusable Base Interfaces
-// ==========================================
 export interface BaseResponse<T> {
   success: boolean;
   data: T;

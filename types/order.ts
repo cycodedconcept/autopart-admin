@@ -49,6 +49,8 @@ export interface Order {
   totalItems: number;
   sellerCount: number;
   buyer: Buyer;
+   seller: OrderSeller;
+  sellers: OrderSeller[];
   // New Seller metrics for split orders/dashboards
   sellerLineItems: number; 
   sellerTotalItems: number;
@@ -83,5 +85,79 @@ export interface OrderListData {
 export interface OrderListApiResponse {
   success: boolean;
   data: OrderListData;
+  message: string;
+}
+
+//single order response
+export interface OrderSeller {
+  id: number;
+  businessName: string;
+  location: string;
+}
+
+export interface OrderBuyer {
+  id: number;
+  fullName: string;
+  email: string;
+  phone: string | null;
+}
+
+export interface OrderStatusHistoryNode {
+  id: number;
+  status: 'pending_payment' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | string;
+  note: string;
+  createdAt: string; // ISO Date String
+  updatedAt: string; // ISO Date String
+}
+
+export interface OrderItemNode {
+  id: number;
+  productId: number;
+  partName: string;
+  partNumber: string;
+  quantity: number;
+  unitPriceKobo: number;
+  lineTotalKobo: number;
+  deliveryFeeKobo: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | string;
+  seller: OrderSeller;
+  delivery: any | null; // Replace with specialized delivery tracking types if needed
+}
+
+export interface OrderDeliveryAddress {
+  label: string; // e.g., "workshop", "home"
+  street: string;
+  city: string;
+  state: string;
+  phone: string;
+}
+
+export interface OrderDetailPayload {
+  id: number;
+  status: 'pending_payment' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | string;
+  paymentMethod: 'paystack' | 'bank_transfer' | string;
+  paymentReference: string;
+  paymentStatus: 'paid' | 'unpaid' | 'refunded' | string;
+  subtotalKobo: number;
+  deliveryFeeKobo: number;
+  totalKobo: number;
+  totalItems: number;
+  sellerCount: number;
+  seller: OrderSeller;
+  sellers: OrderSeller[];
+  buyer: OrderBuyer;
+  createdAt: string; // ISO Date String
+  updatedAt: string; // ISO Date String
+  statusHistory: OrderStatusHistoryNode[];
+  items: OrderItemNode[];
+  deliveryStatus: 'not_created' | 'pending' | 'dispatched' | 'delivered' | string;
+  deliveryAddress: OrderDeliveryAddress;
+  disputeId: number | null;
+  disputes: any[]; // Replace with specific dispute node interface if available
+}
+
+export interface OrderDetailsResponse {
+  success: boolean;
+  data: OrderDetailPayload;
   message: string;
 }

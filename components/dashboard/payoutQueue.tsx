@@ -61,6 +61,7 @@ export const PayoutQueue: React.FC<PayoutQueueCardProps> = ({
       actionLabel="View all"
       onActionClick={onViewAll}
     >
+      {data.length === 0 ? <p className="text-center text-light-gray">No data available</p>:
       <div className="overflow-x-auto" ref={dropdownRef}>
         <table className="w-full text-left border-collapse min-w-112.5">
           <thead>
@@ -78,7 +79,7 @@ export const PayoutQueue: React.FC<PayoutQueueCardProps> = ({
                   {item.sellerName}
                 </td>
                 <td className="py-4 text-sm text-navgray">
-                  {CurrencyFormat().format(item.amount ?? 0)}
+                  {CurrencyFormat(item.amount)}
                 </td>
                 <td className="py-4">
                   <span
@@ -144,7 +145,7 @@ export const PayoutQueue: React.FC<PayoutQueueCardProps> = ({
             ))}
           </tbody>
         </table>
-      </div>
+      </div>}
     </CardWrapper>
   );
 };

@@ -56,9 +56,7 @@ export default function MetricGrid({
       ))} */}
       <MetricCard
         title={platformGmv?.label}
-        value={CurrencyFormat(platformGmv?.currency).format(
-          platformGmv?.trend.currentValue ?? 0,
-        )}
+        value={CurrencyFormat(platformGmv?.trend.currentValue,platformGmv?.currency)}
         trendImage={grv}
         trendDirection={platformGmv?.trend?.direction}
         trendLabel={platformGmv?.trend?.label}
@@ -108,9 +106,7 @@ export default function MetricGrid({
 
       <MetricCard
         title={totalRevenue?.label}
-        value={CurrencyFormat(totalRevenue?.currency).format(
-          totalRevenue?.trend.currentValue ?? 0,
-        )}
+        value={CurrencyFormat(totalRevenue?.trend.currentValue,totalRevenue?.currency)}
         trendLabel={totalRevenue?.trend?.label}
         trendDirection={totalRevenue?.trend?.direction}
         subtext={totalRevenue?.trend?.label}

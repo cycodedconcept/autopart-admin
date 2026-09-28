@@ -3,9 +3,7 @@
 import React, { useState } from "react";
 import {
   ChevronLeft,
-  ShieldAlert,
-  Layers,
-  MessageSquare,
+  
   Loader2,
   AlertCircle,
   Dot,
@@ -22,7 +20,7 @@ import {
   useSellersQuery,
   useSuspendSellerAccount,
 } from "@/lib/queries";
-import { StatusBadge } from "@/app/(admin)/sellers/verification-queue/page";
+import { StatusBadge } from "../atoms/statusBadge";
 
 type TabType = "Overview" | "Listings" | "Orders" | "Disputes";
 type ActiveModalType = "Suspend" | "Plan" | "Message" | null;
@@ -33,59 +31,12 @@ interface SellerProfileProps {
   onClose: () => void;
 }
 
-// const orders = [
-//   {
-//     id: 5,
-//     status: "confirmed",
-//     paymentMethod: "paystack",
-//     paymentReference: "APT-5-1783080971814-6CB7A63D",
-//     paymentStatus: "paid",
-//     subtotalKobo: 15600000,
-//     deliveryFeeKobo: 0,
-//     totalKobo: 15600000,
-//     totalItems: 3,
-//     sellerLineItems: 1,
-//     sellerTotalItems: 3,
-//     sellerTotalKobo: 15600000,
-//     deliveryAddress: {
-//       id: 5,
-//       label: "Workshop",
-//       street: "12 Adeola Odeku Street",
-//       city: "Ikeja",
-//       state: "Lagos",
-//       phone: "+2348012345678",
-//     },
-//     items: [
-//       {
-//         id: 7,
-//         productId: 4007,
-//         title: "oil filter",
-//         partNumber: "FILTER-001",
-//         condition: "used",
-//         location: "Abuja",
-//         quantity: 3,
-//         unitPriceKobo: 5200000,
-//         lineTotalKobo: 15600000,
-//         itemStatus: "pending",
-//         primaryImageUrl:
-//           "uploads/product-images/product-image-1783071679206-2e07c87b-78d6-4a5e-98ed-470eabddd98e.jpg",
-//         seller: {
-//           id: 1,
-//           businessName: "Prime Auto Hub",
-//           rating: 0,
-//         },
-//       },
-//     ],
-//     createdAt: "2026-07-03T12:10:00.000Z",
-//     updatedAt: "2026-07-03T12:20:02.000Z",
-//   },
-// ];
+
 export const SellerProfile: React.FC<SellerProfileProps> = ({
   sellerEmail,
   sellerId,
   onClose,
 }) => {
-  // const sellerEmail = "kamal-motors-101";
 
   const [modalConfig, setModalConfig] = useState<{
     type: string | null;

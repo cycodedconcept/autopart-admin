@@ -3,15 +3,12 @@ import { ActionsMenu } from "@/components/atoms/actionMenu";
 import { formatDateLabelYear } from "@/components/atoms/formatDate";
 import { Pagination } from "@/components/atoms/pagination";
 import { SearchInput } from "@/components/atoms/searchInputs";
+import { StatusBadge } from "@/components/atoms/statusBadge";
 import MetricCard from "@/components/dashboard/metricCard";
 import { SellerDetailProfile } from "@/components/verification/sellerDetail";
-import { useSuspendSellerAccount, useVerificationQuery } from "@/lib/queries";
-import {
-  ActionsMenuProps,
-  SellerRequest,
-  VerificationStatus,
-} from "@/types/verification";
-import { AlertCircle, Loader2, MoreVertical, Search } from "lucide-react";
+import { useVerificationQuery } from "@/lib/queries";
+import { SellerRequest } from "@/types/verification";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState } from "react";
 
@@ -114,7 +111,11 @@ const statusItems = [
     textClass: "text-[#00A63E]",
   },
 ];
-export const SummaryStats: React.FC<{pending: number, verified: number, rejected: number}> = ({pending, verified, rejected}) => {
+export const SummaryStats: React.FC<{
+  pending: number;
+  verified: number;
+  rejected: number;
+}> = ({ pending, verified, rejected }) => {
   return (
     <div className="flex items-center gap-3 mb-6">
       {statusItems.map((item, index) => (
@@ -122,51 +123,21 @@ export const SummaryStats: React.FC<{pending: number, verified: number, rejected
           key={index}
           className={`${item.bgClass} ${item.borderClass} ${item.textClass} border rounded-lg px-2 md:px-4 py-2 flex items-center gap-2`}
         >
-          <span className="text-lg font-bold">{item.label === "Pending" ? pending : item.label === "Verified today" ? verified : item.label === "Rejected"? rejected : item.count}</span>
+          <span className="text-lg font-bold">
+            {item.label === "Pending"
+              ? pending
+              : item.label === "Verified today"
+                ? verified
+                : item.label === "Rejected"
+                  ? rejected
+                  : item.count}
+          </span>
           <span className="text-sm font-medium truncate md:whitespace-normal">
             {item.label}
           </span>
         </div>
       ))}
     </div>
-  );
-};
-
-// --- STATUS BADGE COMPONENT ---
-interface StatusBadgeProps {
-  status: VerificationStatus;
-  width?: string;
-}
-
-export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, width }) => {
-  const styles: Record<VerificationStatus, string> = {
-    "Pending CAC": "bg-[#FEF3C6] text-[#BB4D00] ",
-    "Pending review": "bg-[#DBEAFE] text-[#1447E6] ",
-    Flagged: "bg-[#FFE2E2] text-[#C10007] ",
-    Approved: "bg-[#DCFCE7] text-[#008236] ",
-    active: "bg-[#E8FFF4] text-[#085041] ",
-    banned: "bg-[#FFF1F1] text-[#791F1F] ",
-    pending: "bg-[#FEF3EB] text-[#633806] ",
-    delivered: "bg-[#DCFCE7] text-[#008236] ",
-    verified: "bg-[#DCFCE7] text-[#008236] ",
-    resolved: "bg-[#DCFCE7] text-[#008236] ",
-    confirmed: "bg-[#DBEAFE] text-[#1447E6] ",
-    "in review": "bg-[#DBEAFE] text-[#1447E6] ",
-    "in transit": "bg-[#FEF3C6] text-[#BB4D00] ",
-    suspended: "bg-[#FEF3C6] text-[#BB4D00] ",
-    "escalated": "bg-[#FEF3C6] text-[#BB4D00] ",
-    disputed: "bg-[#FFE2E2] text-[#C10007] ",
-    rejected: "bg-[#FFE2E2] text-[#C10007] ",
-    open: "bg-[#FFE2E2] text-[#C10007] ",
-    cancelled: "bg-[#F3F4F6] text-[#4A5565] ",
-  };
-
-  return (
-    <span
-      className={`px-2.5 py-1 text-xs font-medium rounded-full ${width}  ${styles[status]}`}
-    >
-      {status}
-    </span>
   );
 };
 
@@ -183,24 +154,22 @@ const VerificationQueue: React.FC = () => {
     page,
     activeTab,
   );
-  const {data:pending} = useVerificationQuery(page ,"pending")
-  const {data:verified} = useVerificationQuery(page ,"verified")
-  const {data:rejected} = useVerificationQuery(page ,"rejected")
-  
+  const { data: pending } = useVerificationQuery(page, "pending");
+  const { data: verified } = useVerificationQuery(page, "verified");
+  const { data: rejected } = useVerificationQuery(page, "rejected");
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const totalPagesCount = data?.data?.pagination?.totalPages || 1;
   const selectedSellerId = Number(searchParams.get("id"));
   const selectedSellerEmail = searchParams.get("email");
   const openDetails = Boolean(selectedSellerEmail);
-  // Action event handler that updates live application state dynamically
- 
+  
   const handleCloseProfile = () => {
     // Clears the query parameter to return back to the table view
     router.push("/sellers/verification-queue", { shallow: true } as any);
   };
 
-  
   const handleAction = (id: number, email: string, action: string) => {
     if (action.toLowerCase() === "review") {
       return router.push(
@@ -221,7 +190,7 @@ const VerificationQueue: React.FC = () => {
       seller.sellerProfile.verificationStatus === activeTab;
     return matchesSearch && matchesTab;
   });
-console.log(data)
+
   return (
     <>
       {!openDetails ? (
@@ -237,17 +206,23 @@ console.log(data)
             </p>
           </div>
           {/* Summary KPI Pills */}
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <MetricCard
-                    subTitle="Pending"
-                    value={pending?.data?.sellers?.length ?? 0}
-                   
-                    divStyle=""
-                  />
-                  <MetricCard subTitle="Verified verification" value={verified?.data?.sellers?.length ?? 0} divStyle="" />
-                  <MetricCard subTitle="Rejected" value={rejected?.data?.sellers?.length ?? 0} divStyle="" />
-                  
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <MetricCard
+              subTitle="Pending"
+              value={pending?.data?.sellers?.length ?? 0}
+              divStyle=""
+            />
+            <MetricCard
+              subTitle="Verified verification"
+              value={verified?.data?.sellers?.length ?? 0}
+              divStyle=""
+            />
+            <MetricCard
+              subTitle="Rejected"
+              value={rejected?.data?.sellers?.length ?? 0}
+              divStyle=""
+            />
+          </div>
           {/* <SummaryStats
            pending={pending?.data?.sellers?.length ?? 0}
            verified={verified?.data?.sellers?.length ?? 0}
@@ -280,7 +255,7 @@ console.log(data)
           </div>
 
           {/* Data Table */}
-          <div className="overflow-x-auto md:min-h-100  rounded-lg">
+          <div className="overflow-x-auto min-h-56 md:min-h-100  rounded-lg border border-lightborder">
             {isFetching ? (
               <div className="flex justify-center items-center h-64">
                 <Loader2 className="animate-spin text-gray-400" size={24} />
@@ -291,7 +266,7 @@ console.log(data)
                 <span>{error?.message || "Failed to load lists"}</span>
               </div>
             ) : (
-              <table className="min-w-200 md:min-w-auto w-full text-left border-collapse border border-lightborder">
+              <table className="min-w-200 md:min-w-auto w-full text-left border-collapse">
                 <thead className="">
                   <tr className="border-b border-lightborder text-xs text-lighttext uppercase">
                     <th className="py-3 font-medium pl-3">Business Name</th>

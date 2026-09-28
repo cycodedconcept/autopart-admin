@@ -13,116 +13,66 @@ import {
 } from 'recharts';
 
 interface OrderDataNode {
-  orderId: number;
-  orderCode: string;
-  sellerLabel: string;
-  sellerCount: number;
-  totalKobo: number;
-  status: string;
-  paymentStatus: string;
-  createdAt: string; 
-  quantity: number; // 👈 Track item counts from backend payloads
+  weekLabel: string; // e.g., "2026-07-20"
+  orderCount: number;
 }
 
 interface OrdersBarChartProps {
-  data: OrderDataNode[];
-  title?: string;
-  selectedFilter?: '8w' | '60d'; 
+  data?: OrderDataNode[];
+  title: string;
+  selectedFilter: string;
 }
 
-interface ProcessedWeekBucket {
-  week: string;
-  quantity: number; // 👈 Swapped out from orderCount
-  revenue: string;
-  rawNaira: number;
-  startDate: Date;
-  endDate: Date;
-}
+const BAR_COLOR = '#7ED321';
+const BAR_HOVER_COLOR = '#6BB31E';
 
 export const OrdersBarChart: React.FC<OrdersBarChartProps> = ({
-  data = [],
-  title = "Orders — Last 8 Weeks",
-  selectedFilter = "8w"
+  data = [
+  ],
+  title,
+  selectedFilter 
 }) => {
+  const [hoverIndex, setHoverIndex] = React.useState<number | null>(null);
 
-  const koboToNaira = (kobo: number) => kobo / 100;
+  const getProcessedChartData = () => {
+    return data.map((item, index) => {
+      const date = new Date(item.weekLabel);
+      let label = item.weekLabel;
 
-  const formatNairaAbbreviation = (amount: number) => {
-    if (amount === 0) return '₦0';
-    if (amount >= 1_000_000) return `₦${(amount / 1_000_000).toFixed(1).replace('.0', '')}M`;
-    if (amount >= 1_000) return `₦${(amount / 1_000).toFixed(0)}K`;
-    return `₦${amount.toFixed(0)}`;
-  };
-
-  const getProcessedChartData = (): ProcessedWeekBucket[] => {
-    const buckets: ProcessedWeekBucket[] = [];
-    
-    let anchorDate = new Date();
-    if (data.length > 0) {
-      const timestamps = data.map(d => new Date(d.createdAt).getTime()).filter(t => !isNaN(t));
-      if (timestamps.length > 0) {
-        anchorDate = new Date(Math.max(...timestamps));
+      if (!isNaN(date.getTime())) {
+        if (selectedFilter === '7d' || selectedFilter === '30d') {
+          label = date.toLocaleDateString('en-NG', { day: 'numeric', month: 'short' });
+        } else if (selectedFilter === '1y') {
+          label = date.toLocaleDateString('en-NG', { month: 'short', year: '2-digit' });
+        } else {
+          label = `Wk ${index + 1}`;
+        }
       }
-    }
 
-    for (let i = 7; i >= 0; i--) {
-      const endDate = new Date(anchorDate);
-      endDate.setDate(anchorDate.getDate() - i * 7);
-      
-      const startDate = new Date(endDate);
-      startDate.setDate(endDate.getDate() - 6);
-
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(23, 59, 59, 999);
-
-      buckets.push({
-        week: `Wk ${8 - i}`,
-        quantity: 0, // 👈 Initialized at 0
-        revenue: '₦0',
-        rawNaira: 0,
-        startDate,
-        endDate,
-      });
-    }
-
-    data.forEach((order) => {
-      if (!order.createdAt) return;
-      const orderDate = new Date(order.createdAt);
-
-      const targetBucket = buckets.find(
-        (b) => orderDate >= b.startDate && orderDate <= b.endDate
-      );
-
-      if (targetBucket) {
-        // 👈 Accumulates quantity counts instead of order counts
-        targetBucket.quantity += order.quantity || 0; 
-        targetBucket.rawNaira += koboToNaira(order.totalKobo);
-      }
+      return {
+        ...item,
+        displayLabel: label,
+        formattedRange: !isNaN(date.getTime())
+          ? date.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
+          : item.weekLabel
+      };
     });
-
-    return buckets.map((b) => ({
-      ...b,
-      revenue: formatNairaAbbreviation(b.rawNaira),
-    }));
   };
 
   const chartData = getProcessedChartData();
 
+  
+
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
-      const currentData = payload.payload;
-      const dateRangeStr = `${currentData.startDate.toLocaleDateString('en-NG', { day: 'numeric', month: 'short' })} - ${currentData.endDate.toLocaleDateString('en-NG', { day: 'numeric', month: 'short' })}`;
-
+      const currentData = payload[0].payload;
       return (
         <div className="bg-gray-900 text-white p-2.5 rounded shadow-lg text-[10px] flex flex-col gap-1 border border-gray-800 text-left">
           <span className="font-bold text-gray-400 uppercase text-[8px] tracking-wider block">
-            {currentData.week} ({dateRangeStr})
+            {currentData.displayLabel} ({currentData.formattedRange})
           </span>
           <span className="font-semibold text-white text-xs block">
-            🔢 {currentData.quantity} Items Sold
-          </span>
-          <span className="text-emerald-400 font-semibold border-t border-gray-800 pt-1 mt-0.5 block">
-            💰 {currentData.revenue} GMV Volume
+            {currentData.orderCount} Orders Placed
           </span>
         </div>
       );
@@ -131,48 +81,43 @@ export const OrdersBarChart: React.FC<OrdersBarChartProps> = ({
   };
 
   return (
-    <div className="bg-white px-4 py-5 rounded-lg border border-lightborder h-[320px] flex flex-col justify-between w-full font-sans">
+    <div
+      className="bg-white px-4 py-5 rounded-lg border border-gray-200 h-80 flex flex-col justify-between w-full font-sans"
+    >
       <div className="flex justify-between items-center mb-4 text-left">
         <h3 className="text-sm font-medium text-dark">
-          {selectedFilter === '60d' ? "Orders — Last 60 Days" : title}
+          {title}
         </h3>
       </div>
-
-      <div className="w-full flex-1 min-h-0 text-[10px] text-lighttext">
+      {data.length === 0 ? <p>No data to show</p> :
+      <div className="w-full flex-1 min-h-0 text-[10px] text-gray-500">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={chartData}
-            margin={{ top: 10, right: 5, left: -25, bottom: 0 }}
-          >
+          <BarChart data={chartData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#F0F0F0" />
             <XAxis
-              dataKey="week"
+              dataKey="displayLabel"
               axisLine={{ stroke: "#E2E8F0" }}
               tickLine={false}
               stroke="#99A0AE"
               dy={5}
+              interval={0}
             />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              domain={[0, 'auto']}
-              stroke="#99A0AE"
-              allowDecimals={false}
-            />
+            <YAxis axisLine={false} tickLine={false} domain={[0, 'auto']} stroke="#99A0AE" allowDecimals={false} />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: "#F8FAFC", opacity: 0.5 }} />
-            
-            {/* 👈 FIXED: Pointed dataKey directly to item quantity values */}
-            <Bar dataKey="quantity" radius={[4, 4, 0, 0]} maxBarSize={32}>
+            <Bar dataKey="orderCount" radius={[4, 4, 0, 0]} maxBarSize={32}>
               {chartData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  className="fill-[#7ED321] hover:fill-[#6BB31E] transition-colors duration-200 cursor-pointer"
+                  fill={hoverIndex === index ? BAR_HOVER_COLOR : BAR_COLOR}
+                  style={{ cursor: 'pointer', transition: 'fill 0.2s' }}
+                  onMouseEnter={() => setHoverIndex(index)}
+                  onMouseLeave={() => setHoverIndex(null)}
                 />
               ))}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-      </div>
+      </div>}
     </div>
   );
 };

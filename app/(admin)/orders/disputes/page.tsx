@@ -1,32 +1,18 @@
 "use client";
 
 import MetricCard from "@/components/dashboard/metricCard";
-import {
-  mockSellers,
-  StatusBadge,
-} from "../../sellers/verification-queue/page";
 import { SearchInput } from "@/components/atoms/searchInputs";
 import { useState } from "react";
-import { PlanProps, SellerRequest } from "@/types/verification";
-import { ActionsMenu } from "@/components/atoms/actionMenu";
-import { ActionsMenuSeller } from "@/components/atoms/actionMenuSeller";
+import { PlanProps } from "@/types/verification";
 import { Pagination } from "@/components/atoms/pagination";
-import {
-  useDisputesQuery,
-  useOrdersQuery,
-  useSellersQuery,
-  useSuspendSellerAccount,
-} from "@/lib/queries";
+import { useDisputesQuery } from "@/lib/queries";
 import { AlertCircle, Loader2 } from "lucide-react";
-import { SellerReviewItem } from "@/types/seller";
-import { SellerProfile } from "@/components/seller/sellerProfile";
 import { useRouter, useSearchParams } from "next/navigation";
-import { status } from "@/types/order";
 import { formatDateLabelYear } from "@/components/atoms/formatDate";
-import CurrencyFormat from "@/components/atoms/currencyFormat";
 import { ActionsMenuOrder } from "@/components/order/actionMenu";
-import { timeStamp } from "console";
-import getRelativeTimeString from "@/components/atoms/timeStamp";
+import { CountdownTimer } from "@/components/atoms/countdownTimer";
+import DisputeDetails from "@/components/disputes/disputeDetails";
+import { StatusBadge } from "@/components/atoms/statusBadge";
 
 interface PlanBadgeProps {
   status: PlanProps;
@@ -50,7 +36,6 @@ export const PlanBadge: React.FC<PlanBadgeProps> = ({ status }) => {
 
 const Disputes = () => {
   const [page, setPage] = useState(1);
-  const [sellers, setSellers] = useState<SellerReviewItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<
     "all" | "open" | "rejected" | "resolved"
@@ -58,92 +43,18 @@ const Disputes = () => {
   const [raisedBy, setRaisedBy] = useState("");
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const {
-    data: d,
+    data,
     isLoading,
     isError,
     error,
   } = useDisputesQuery(page, activeTab, searchTerm, raisedBy);
 
-  const data = {
-    success: true,
-    data: {
-      disputes: [
-        {
-          id: 1,
-          orderId: 1,
-          raisedBy: "buyer",
-          reason: "Buyer reported a damaged part on delivery.",
-          status: "open",
-          resolutionNote: null,
-          refundReference: null,
-          refundAmountKobo: null,
-          resolvedBy: null,
-          resolvedAt: null,
-          createdAt: "2026-07-11T17:31:48.000Z",
-          updatedAt: "2026-07-11T17:31:48.000Z",
-          order: {
-            id: 1,
-            status: "pending_payment",
-            paymentMethod: "paystack",
-            paymentReference: null,
-            paymentStatus: "pending",
-            totalKobo: 4350000,
-            createdAt: "2026-06-30T14:50:39.000Z",
-            updatedAt: "2026-06-30T14:50:39.000Z",
-          },
-          buyer: {
-            id: 2,
-            fullName: "cyril okeleke",
-            email: "cycodedconcept@gmail.com",
-            phone: "+2348131529862",
-          },
-          raisedBySeller: null,
-          resolvedByAdmin: null,
-          sellers: [
-            {
-              id: 9001,
-              userId: 9101,
-              businessName: "Prime Auto Hub",
-              contactEmail: "sales@primeautohub.ng",
-              contactPhone: "+2348012345601",
-              fullName: "Uche Okafor",
-              email: "uche@primeautohub.ng",
-              phone: "+2348012345601",
-            },
-            {
-              id: 9003,
-              userId: 9103,
-              businessName: "Naija OEM Spares",
-              contactEmail: "support@naijaoem.ng",
-              contactPhone: "+2348012345603",
-              fullName: "Chinedu Eze",
-              email: "chinedu@naijaoem.ng",
-              phone: "+2348012345603",
-            },
-          ],
-        },
-      ],
-      pagination: {
-        page: 1,
-        limit: 10,
-        total: 1,
-        totalPages: 1,
-      },
-      filters: {
-        status: "open",
-        raisedBy: "buyer",
-        search: null,
-      },
-    },
-    message: "Disputes fetched successfully.",
-  };
+ 
   const searchParams = useSearchParams();
   const router = useRouter();
-
-  // Extract the 'id' parameter from the URL query string (e.g., ?id=seller_123)
-  const selectedSellerEmail = searchParams.get("email");
-  const selectedSellerId = Number(searchParams.get("id"));
-  const showProfile = Boolean(selectedSellerEmail);
+  const [timerValue, setTimerValue] = useState("");
+  const selectedDisputeId = Number(searchParams.get("id"));
+  const showProfile = Boolean(selectedDisputeId);
 
   const handleCloseProfile = () => {
     // Clears the query parameter to return back to the table view
@@ -167,17 +78,15 @@ const Disputes = () => {
     return matchesSearch && matchesTab;
   });
 
-  const handleAction = (email: string, id: number, action: string) => {
-   
-    if (action === "View profile") {
-      return router.push(`/orders/disputes?email=${email}&id=${id}`, {
+  const handleAction = (id: number, action: string) => {
+    if (action === "View details") {
+      return router.push(`/orders/disputes?id=${id}`, {
         shallow: true,
       } as any);
     }
   };
 
   return showProfile ? (
-    /* If an ID is in the URL, replace the table completely with the profile */
     isLoading ? (
       <div className="flex justify-center items-center h-64">
         <Loader2 className="animate-spin text-gray-400" size={24} />
@@ -188,9 +97,9 @@ const Disputes = () => {
         <span>{error?.message || "Failed to load lists"}</span>
       </div>
     ) : (
-      <SellerProfile
-        sellerEmail={selectedSellerEmail!}
-        sellerId={selectedSellerId!}
+      <DisputeDetails
+        disputeId={selectedDisputeId!}
+        disputes={data?.data?.disputes || []}
         onClose={handleCloseProfile}
       />
     )
@@ -252,7 +161,7 @@ const Disputes = () => {
         </div>
 
         {/* Data Table */}
-        <div className="overflow-x-auto rounded-lg md:min-h-100">
+        <div className="overflow-x-auto rounded-lg md:min-h-100 border border-lightborder">
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <Loader2 className="animate-spin text-gray-400" size={24} />
@@ -264,7 +173,7 @@ const Disputes = () => {
             </div>
           ) : (
             <>
-              <table className="min-w-200 md:min-w-auto w-full text-left border-collapse border border-lightborder ">
+              <table className="min-w-200 md:min-w-auto w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-[#F5F7FA] text-xs text-lighttext  uppercase">
                     <th className="py-3 font-medium pl-3">dispute id</th>
@@ -288,62 +197,62 @@ const Disputes = () => {
                       </td>
                     </tr>
                   ) : (
-                    filteredDisputes?.map((order) => (
-                      <tr
-                        key={order.id}
-                        className="hover:bg-gray-50/50 transition-colors group text-sm border-b border-[#F5F7FA] last:border-0 capitalize"
-                      >
-                        <td className="pl-3 py-3.5 text-dark font-medium">
-                          {order?.id}
-                        </td>
-                        <td className="pl-3 py-3.5 text-dark font-medium">
-                          {order?.orderId}
-                        </td>
-                        <td className="py-3.5 text-navgray">
-                          {order?.buyer.fullName}
-                        </td>
-                        <td className="py-3.5 text-navgray">
-                          {/* {order?.address} */}
-                        </td>
-                        <td className="py-3.5 text-navgray truncate">
-                          {order?.reason}
-                        </td>
-                        <td className="py-3.5 text-dark font-medium">
-                          {formatDateLabelYear(order?.createdAt)}
+                    filteredDisputes?.map((order) => {
+                      return (
+                        <tr
+                          key={order.id}
+                          className={`transition-colors group text-sm border-b border-[#F5F7FA] last:border-0 capitalize ${Number(timerValue) <= 5 ? "bg-[#FEF2F2]" : Number(timerValue) < 10 && Number(timerValue) > 5 ? "bg-[#FFFBEB]" : "bg-[#F5F7FA]"}`}
+                        >
+                          <td className="pl-3 py-3.5 text-dark font-medium">
+                            {order?.id}
+                          </td>
+                          <td className="pl-3 py-3.5 text-dark font-medium">
+                            {order?.orderId}
+                          </td>
+                          <td className="py-3.5 text-navgray">
+                            {order?.buyer.fullName}
+                          </td>
+                          <td className="py-3.5 text-navgray">
+                            {/* {order?.address} */}
+                          </td>
+                          <td className="py-3.5 text-navgray max-w-24 lg:max-w-16 truncate">
+                            {order?.reason}
+                          </td>
 
-                          
-                        </td>
-                         <td className="py-3.5 text-navgray">
-                          {getRelativeTimeString(order?.createdAt)}
-                        </td>
-                        <td className="py-3.5">
-                          <StatusBadge
-                            width="block w-fit"
-                            status={order?.status}
-                          />
-                        </td>
-                       
-                        <td className="py-3.5">
-                          <div className="">
-                            <ActionsMenuOrder
-                              isOpen={openMenuId === order?.id}
-                              onToggle={() =>
-                                setOpenMenuId(
-                                  openMenuId === order?.id ? null : order?.id,
-                                )
-                              }
-                              onAction={(action) =>
-                                handleAction(
-                                  order?.buyer.email,
-                                  order?.id,
-                                  action,
-                                )
-                              }
+                          <td className="py-3.5 text-navgray">
+                            {formatDateLabelYear(order?.createdAt)}
+                          </td>
+                          <td className="py-3.5 text-dark font-medium">
+                            <CountdownTimer
+                              createdAt={order?.createdAt}
+                              onTimeChange={setTimerValue}
                             />
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+                          <td className="py-3.5">
+                            <StatusBadge
+                              width="block w-fit"
+                              status={order?.status}
+                            />
+                          </td>
+
+                          <td className="py-3.5">
+                            <div className="">
+                              <ActionsMenuOrder
+                                isOpen={openMenuId === order?.id}
+                                onToggle={() =>
+                                  setOpenMenuId(
+                                    openMenuId === order?.id ? null : order?.id,
+                                  )
+                                }
+                                onAction={(action) =>
+                                  handleAction(order?.id, action)
+                                }
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
