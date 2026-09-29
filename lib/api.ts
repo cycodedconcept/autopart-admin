@@ -9,6 +9,7 @@ import {
   DisputeResponse,
 } from "@/types/dispute";
 import { OrderDetailsResponse, OrderListApiResponse } from "@/types/order";
+import { FetchPayoutsResponse, PayoutRecord } from "@/types/payout";
 import { PlatformAnalyticsResponse } from "@/types/platform";
 import { FetchRidersResponse } from "@/types/rider";
 import { SellerApi, UserListApiResponse } from "@/types/seller";
@@ -531,7 +532,7 @@ export const getPayouts = async ({
   status?: string;
   search?: string;
   page?: number;
-}) => {
+}): Promise<FetchPayoutsResponse> => {
   const params = {
     page: page?.toString(),
     limit: "10",
@@ -565,7 +566,7 @@ export const updatePayout = async (
   payoutId: number,
   status: string,
   note?: string,
-): Promise<OrderDetailsResponse> => {
+): Promise<FetchPayoutsResponse> => {
   const response = await fetch(`${BASE_URL}/admin/payouts/${payoutId}`, {
     method: "PATCH",
     headers: getHeader(token),
@@ -575,6 +576,46 @@ export const updatePayout = async (
   const result = await response.json();
   if (!response.ok)
     throw new Error(result.error.message || "Unable to update payout");
+
+  return result;
+};
+
+//blog
+
+export const getBlogs = async ({
+  token,
+  page,
+  per_page,
+  sort,
+  search,
+}: {
+  token: string | null;
+  page?: number | null;
+  per_page?: number | null;
+  sort?: string | null;
+  search?: string | null;
+}): Promise<BlogPostsResponse> => {
+  const params = {
+    page: page?.toString(),
+    per_page: per_page?.toString() ,
+    sort: sort,
+    search: search,
+  };
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    // Only append if the value is not an empty string
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.append(key, value);
+    }
+  });
+  const res = await fetch(`${BASE_URL}/blog/posts?${searchParams.toString()} `, {
+    method: "GET",
+    headers: getHeader(token),
+  });
+
+  const result = await res.json();
+  if (!res.ok)
+    throw new Error(result.error.message || "Unable to get blog posts");
 
   return result;
 };

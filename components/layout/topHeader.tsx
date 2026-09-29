@@ -46,13 +46,13 @@ export default function TopHeader() {
           <Bell size={15} />
         </button>
         
-        <button 
+        {/* <button 
           onClick={handleExport}
           className="flex items-center gap-1.5 px-3 py-2 bg-[#0E121B] hover:bg-slate-800 text-white rounded-md text-xs font-medium shadow-sm transition-colors"
         >
           <Download size={14} />
           <span>Export report</span>
-        </button>
+        </button> */}
       </div>
     </div>
   );

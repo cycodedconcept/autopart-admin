@@ -202,7 +202,8 @@ const navigationSections: SidebarSection[] = [
       {
         icon: SettingsGearIcon,
         label: "System settings",
-        link: "/platform/settings",
+        link: "/settings",
+        subTitle: "Settings",
       },
     ],
   },

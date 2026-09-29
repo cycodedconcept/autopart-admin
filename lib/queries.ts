@@ -29,6 +29,7 @@ import {
   approveLogisticCompany,
   getPayouts,
   updatePayout,
+  getBlogs,
 } from "./api";
 import { useAuthStore } from "@/store/authStore";
 import { ApiErrorPayload, AuthUserResponse, LoginFormData } from "@/types/auth";
@@ -45,6 +46,7 @@ export const QUERY_KEYS = {
     ["platformAnalytics", token] as const,
 };
 
+// AUTH
 export function login() {
   const { setSession } = useAuthStore();
 
@@ -65,7 +67,7 @@ export function login() {
   });
 }
 
-// --- Dashboard
+// Dashboard
 export function useDashboardQuery() {
   // ✅ VALID: Hooks are perfectly fine at the top level of a custom hook!
   const token = useAuthStore((state) => state.token);
@@ -103,7 +105,7 @@ export function usePlatformAnalyticsQuery(
   });
 }
 
-// sellers
+// Sellers
 export const useSellersQuery = (
   page?: number,
   status?: string,
@@ -223,7 +225,7 @@ export const useRejectVerification = () => {
   });
 };
 
-//categories
+// Categories
 export const useCategoryQuery = (status: string) => {
   const token = useAuthStore((state) => state.token);
   return useQuery({
@@ -242,7 +244,7 @@ export const useCategoryQuery = (status: string) => {
   });
 };
 
-//orders
+// Orders
 export const useOrdersQuery = (
   page?: number,
   status?: string,
@@ -397,7 +399,7 @@ export const useDisputeStatusQuery = () => {
   });
 };
 
-//riders and logistics
+// Riders and Logistics
 export const useCompanyQuery = (
   page?: number,
   status?: string,
@@ -455,8 +457,8 @@ export const useOnboardPartnerMutation = () => {
   const token = useAuthStore((state) => state.token);
 
   return useMutation({
-    mutationFn: 
-  (data: OnboardPartnerPayload) => onboardPartnerRequest(data, token),
+    mutationFn: (data: OnboardPartnerPayload) =>
+      onboardPartnerRequest(data, token),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["logistics"] });
 
@@ -493,27 +495,40 @@ export const useApproveLogisticCompany = () => {
   });
 };
 
-//payouts
+// Payouts
 export const usePayoutsQuery = (
   page?: number,
   status?: string,
   payeeType?: string,
   search?: string,
   companyId?: number | null,
-  sellerId?: number | null,) => {
+  sellerId?: number | null,
+) => {
   const token = useAuthStore((state) => state.token);
   return useQuery({
     // 1. Sync Driver: The key registers variables as absolute dependencies
-    queryKey: ["payouts", { page, status, payeeType, search, companyId, sellerId }],
+    queryKey: [
+      "payouts",
+      { page, status, payeeType, search, companyId, sellerId },
+    ],
     // 2. Resolver: Automatically passes changing keys into your API client call
-    queryFn: () => getPayouts({ token, page, status, payeeType, search, companyId, sellerId }),
+    queryFn: () =>
+      getPayouts({
+        token,
+        page,
+        status,
+        payeeType,
+        search,
+        companyId,
+        sellerId,
+      }),
     // 3. UX Optimization: Prevents the UI layout from flickering/blanking out during fetches
     placeholderData: keepPreviousData,
     enabled: !!token,
     // Optional: Tailor cache lifetimes based on how fluid your queue data shifts
     staleTime: 5000,
   });
-}
+};
 
 export const useUpdatePayoutMutation = () => {
   const queryClient = useQueryClient();
@@ -521,8 +536,15 @@ export const useUpdatePayoutMutation = () => {
 
   return useMutation({
     // Receive variables dynamically right here 🎯
-    mutationFn: ({ id, status, note }: { id: number; status: string; note?: string }) =>
-      updatePayout( token, id, status, note ),
+    mutationFn: ({
+      id,
+      status,
+      note,
+    }: {
+      id: number;
+      status: string;
+      note?: string;
+    }) => updatePayout(token, id, status, note),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["payouts"] });
 
@@ -537,4 +559,24 @@ export const useUpdatePayoutMutation = () => {
   });
 };
 
+// Blogs
 
+export const useBlogsQuery = (
+  page?: number,
+  per_page?: number,
+  sort?: string,
+  search?: string,
+) => {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    // 1. Sync Driver: The key registers variables as absolute dependencies
+    queryKey: ["blogs", { page, per_page, sort, search }],
+    // 2. Resolver: Automatically passes changing keys into your API client call
+    queryFn: () => getBlogs({ token, page, per_page, sort, search }),
+    // 3. UX Optimization: Prevents the UI layout from flickering/blanking out during fetches
+    placeholderData: keepPreviousData,
+    enabled: !!token,
+    // Optional: Tailor cache lifetimes based on how fluid your queue data shifts
+    staleTime: 5000,
+  });
+};

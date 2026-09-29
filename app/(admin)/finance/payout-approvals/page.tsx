@@ -272,7 +272,7 @@ const realData = data?.data?.payouts
               </div>
             ) : (
               <div>
-                {filteredPayouts?.length > 0 ? (
+                {filteredPayouts && filteredPayouts?.length > 0 ? (
                   filteredPayouts?.map((payout: PayoutRecord) => {
                     return (
                       <div
