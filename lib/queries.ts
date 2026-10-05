@@ -30,6 +30,15 @@ import {
   getPayouts,
   updatePayout,
   getBlogs,
+  getAdmin,
+  getPlatformSettings,
+  updatePlatformSettings,
+  publishPost,
+  createDraftPost,
+  createBlogTags,
+  createBlogCategories,
+  createSlugComment,
+  approvePendingComment,
 } from "./api";
 import { useAuthStore } from "@/store/authStore";
 import { ApiErrorPayload, AuthUserResponse, LoginFormData } from "@/types/auth";
@@ -66,6 +75,16 @@ export function login() {
     },
   });
 }
+
+// Admin Profile
+export const useAdminProfileQuery = () => {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    queryKey: ["admin", "profile", token],
+    queryFn: () => getAdmin(token),
+    enabled: !!token,
+  });
+};
 
 // Dashboard
 export function useDashboardQuery() {
@@ -226,14 +245,14 @@ export const useRejectVerification = () => {
 };
 
 // Categories
-export const useCategoryQuery = (status: string) => {
+export const useCategoryQuery = (status?: string, page?: number) => {
   const token = useAuthStore((state) => state.token);
   return useQuery({
     // 1. Sync Driver: The key registers variables as absolute dependencies
     queryKey: ["categories", { status }],
 
     // 2. Resolver: Automatically passes changing keys into your API client call
-    queryFn: () => fetchCategories(token, status),
+    queryFn: () => fetchCategories(token, status!, page!),
 
     // 3. UX Optimization: Prevents the UI layout from flickering/blanking out during fetches
     placeholderData: keepPreviousData,
@@ -578,5 +597,158 @@ export const useBlogsQuery = (
     enabled: !!token,
     // Optional: Tailor cache lifetimes based on how fluid your queue data shifts
     staleTime: 5000,
+  });
+};
+
+export const usePublishBlogQueryMutation = () => {
+  const queryClient = useQueryClient();
+  const token = useAuthStore((state) => state.token);
+  return useMutation({
+    mutationFn: ({ id,data }: { id: number,data: any }) => publishPost(token,id, data),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["blogs"] });
+
+      if (data?.message) {
+        toast.success(data.message);
+      }
+    },
+    onError: (error: any) => {
+      const errMsg = error?.message || "An error occurred";
+      toast.error(errMsg);
+    },
+  });
+};
+
+export const useDraftPostQueryMutation = () => {
+  const queryClient = useQueryClient();
+  const token = useAuthStore((state) => state.token);
+  return useMutation({
+    mutationFn: ({ data }: { data: any }) => createDraftPost(token, data),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["blogs"] });
+
+      if (data?.message) {
+        toast.success(data.message);
+      }
+    },
+    onError: (error: any) => {
+      const errMsg = error?.message || "An error occurred";
+      toast.error(errMsg);
+    },
+  });
+};
+
+export const useBlogTagsQueryMutation = () => {
+  const queryClient = useQueryClient();
+  const token = useAuthStore((state) => state.token);
+  return useMutation({
+    mutationFn: ({ data }: { data: any }) => createBlogTags(token, data),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["blogs"] });
+
+      if (data?.message) {
+        toast.success(data.message);
+      }
+    },
+    onError: (error: any) => {
+      const errMsg = error?.message || "An error occurred";
+      toast.error(errMsg);
+    },
+  });
+};
+
+export const useBlogCategoryQueryMutation = () => {
+  const queryClient = useQueryClient();
+  const token = useAuthStore((state) => state.token);
+  return useMutation({
+    mutationFn: ({ data }: { data: any }) => createBlogCategories(token, data),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["blogs"] });
+
+      if (data?.message) {
+        toast.success(data.message);
+      }
+    },
+    onError: (error: any) => {
+      const errMsg = error?.message || "An error occurred";
+      toast.error(errMsg);
+    },
+  });
+};
+
+export const useSlugCommentQueryMutation = () => {
+  const queryClient = useQueryClient();
+  const token = useAuthStore((state) => state.token);
+  return useMutation({
+    mutationFn: ({ data }: { data: any }) => createSlugComment(token, data),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["blogs"] });
+
+      if (data?.message) {
+        toast.success(data.message);
+      }
+    },
+    onError: (error: any) => {
+      const errMsg = error?.message || "An error occurred";
+      toast.error(errMsg);
+    },
+  });
+};
+
+export const useApproveCommentQueryMutation = () => {
+  const queryClient = useQueryClient();
+  const token = useAuthStore((state) => state.token);
+  return useMutation({
+    mutationFn: ({ data }: { data: any }) => approvePendingComment(token, data),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["blogs"] });
+
+      if (data?.message) {
+        toast.success(data.message);
+      }
+    },
+    onError: (error: any) => {
+      const errMsg = error?.message || "An error occurred";
+      toast.error(errMsg);
+    },
+  });
+};
+
+
+// Settings
+
+export const useFetchPlatformSettings = () => {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    // 1. Sync Driver: The key registers variables as absolute dependencies
+    queryKey: ["platformSettings"],
+    // 2. Resolver: Automatically passes changing keys into your API client call
+    queryFn: () => getPlatformSettings({ token }),
+    // 3. UX Optimization: Prevents the UI layout from flickering/blanking out during fetches
+    placeholderData: keepPreviousData,
+    enabled: !!token,
+    // Optional: Tailor cache lifetimes based on how fluid your queue data shifts
+    staleTime: 5000,
+  });
+};
+
+export const useUpdatePlatformSettingsMutation = () => {
+  const queryClient = useQueryClient();
+  const token = useAuthStore((state) => state.token);
+
+  return useMutation({
+    mutationFn: ({ settings }: { settings: any }) =>
+      updatePlatformSettings(token, settings),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["platformSettings"] });
+
+      if (data?.message) {
+        toast.success(data.message);
+      }
+    },
+    onError: (error: any) => {
+      const errMsg = error?.message || "An error occurred";
+      toast.error(errMsg);
+    },
   });
 };

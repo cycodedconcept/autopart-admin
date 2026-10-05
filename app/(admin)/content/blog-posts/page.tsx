@@ -11,6 +11,7 @@ import { ActionsMenuOrder } from "@/components/order/actionMenu";
 import OrderDetails from "@/components/order/orderDetails";
 import { StatusBadge } from "@/components/atoms/statusBadge";
 import { formatDateLabelYear } from "@/components/atoms/formatDate";
+import { ActionsPostMenu } from "@/components/blog/actionPostMenu";
 
 const BlogPosts = () => {
   const [page, setPage] = useState(1);
@@ -61,8 +62,13 @@ const BlogPosts = () => {
 //   ).length;
 
   const handleAction = (id: number, action: string) => {
-    if (action === "View details") {
-      return router.push(`/content/blog-posts?id=${id}`, {
+    // if (action === "View details") {
+    //   return router.push(`/content/blog-posts?id=${id}`, {
+    //     shallow: true,
+    //   } as any);
+    // }
+    if (action === "Edit post") {
+      return router.push(`/content/blog-posts/addEdit?postid=${id}&page=${page}`, {
         shallow: true,
       } as any);
     }
@@ -179,7 +185,7 @@ const BlogPosts = () => {
               </div>
               <button
                 className="flex items-center md:gap-1.5 bg-aorange hover:bg-orange-500 cursor-pointer text-white px-1 py-1.5 md:px-3 md:py-2 rounded-lg text-xs md:text-sm transition"
-                //   onClick={() => setIsModalOpen(true)}
+                  onClick={() => router.push("/content/blog-posts/addEdit")}
               >
                 <PlusIcon className="w-5" />
                 <span className="">New Post</span>
@@ -246,7 +252,7 @@ const BlogPosts = () => {
 
                         <td className="py-3.5 px-2">
                           <div className="">
-                            <ActionsMenuOrder
+                            <ActionsPostMenu
                               isOpen={openMenuId === p?.id}
                               onToggle={() =>
                                 setOpenMenuId(

@@ -1,7 +1,9 @@
 import { useAuthStore } from "@/store/authStore";
+import { AdminProfileResponse } from "@/types/admin";
 import { LoginFormData } from "@/types/auth";
 import { CategoryApiResponse } from "@/types/category";
 import { FetchCompaniesResponse, OnboardPartnerPayload } from "@/types/company";
+import { PlatformConfigResponse } from "@/types/configPlatform";
 import { AdminDashboardResponse } from "@/types/dashboard";
 import {
   Dispute,
@@ -11,6 +13,7 @@ import {
 import { OrderDetailsResponse, OrderListApiResponse } from "@/types/order";
 import { FetchPayoutsResponse, PayoutRecord } from "@/types/payout";
 import { PlatformAnalyticsResponse } from "@/types/platform";
+import { PostData } from "@/types/post";
 import { FetchRidersResponse } from "@/types/rider";
 import { SellerApi, UserListApiResponse } from "@/types/seller";
 
@@ -25,6 +28,7 @@ export const getHeader = (token: string | null) => {
   };
 };
 
+// Login
 export async function loginUser(data: LoginFormData) {
   const newData = {
     email: data?.email,
@@ -41,7 +45,24 @@ export async function loginUser(data: LoginFormData) {
   return result;
 }
 
-//dashboard
+// Admin User
+export async function getAdmin(
+  token: string | null,
+): Promise<AdminProfileResponse> {
+  const res = await fetch(`${BASE_URL}/admin/me`, {
+    method: "GET",
+    headers: getHeader(token),
+  });
+  const result = await res.json();
+  if (!res.ok)
+    throw new Error(
+      result.error.message || "Failed to fetch admin profile data",
+    );
+
+  return result;
+}
+
+// Dashboard
 export async function fetchDashboardItems(
   token: string | null,
 ): Promise<AdminDashboardResponse> {
@@ -88,7 +109,7 @@ export async function platformAnalytics(
   return result;
 }
 
-// sellers
+// Sellers
 export const fetchAllSellers = async (
   token: string | null,
   page?: number,
@@ -230,17 +251,26 @@ export const rejectSeller = async ({
   return result;
 };
 
-//categories
+// Categories
 export const fetchCategories = async (
   token: string | null,
-  status: string,
+  status?: string,
+  page?: number,
 ): Promise<CategoryApiResponse> => {
-  const queryParams = new URLSearchParams({
+  const params = {
+    page: page?.toString(),
+    limit: "10",
     status: status,
+  };
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    // Only append if the value is not an empty string
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.append(key, value);
+    }
   });
-
   const response = await fetch(
-    `${BASE_URL}/admin/categories?${queryParams.toString()}`,
+    `${BASE_URL}/admin/categories?${searchParams.toString()}`,
     {
       method: "GET",
       headers: getHeader(token),
@@ -253,7 +283,7 @@ export const fetchCategories = async (
   return result;
 };
 
-// orders
+// Orders
 export const fetchOrders = async (
   token: string | null,
   page?: number,
@@ -403,7 +433,7 @@ export const updateDisputeStatus = async (
   return result;
 };
 
-// riders and companies logistics
+// Riders and Companies Logistics
 export const fetchCompanies = async (
   token: string | null,
   page?: number,
@@ -501,11 +531,14 @@ export const approveLogisticCompany = async ({
   id: number;
   status: string;
 }) => {
-  const res = await fetch(`${BASE_URL}/admin/logistics/companies/${id}/status`, {
-    method: "PATCH",
-    headers: getHeader(token),
-    body: JSON.stringify({ status }),
-  });
+  const res = await fetch(
+    `${BASE_URL}/admin/logistics/companies/${id}/status`,
+    {
+      method: "PATCH",
+      headers: getHeader(token),
+      body: JSON.stringify({ status }),
+    },
+  );
 
   const result = await res.json();
   if (!res.ok)
@@ -514,7 +547,7 @@ export const approveLogisticCompany = async ({
   return result;
 };
 
-//payout approval
+// Payout Approval
 
 export const getPayouts = async ({
   token,
@@ -523,7 +556,7 @@ export const getPayouts = async ({
   status,
   sellerId,
   search,
-  page
+  page,
 }: {
   token: string | null;
   companyId?: number | null;
@@ -549,14 +582,16 @@ export const getPayouts = async ({
       searchParams.append(key, value);
     }
   });
-  const res = await fetch(`${BASE_URL}/admin/payouts?${searchParams.toString()} `, {
-    method: "GET",
-    headers: getHeader(token),
-  });
+  const res = await fetch(
+    `${BASE_URL}/admin/payouts?${searchParams.toString()} `,
+    {
+      method: "GET",
+      headers: getHeader(token),
+    },
+  );
 
   const result = await res.json();
-  if (!res.ok)
-    throw new Error(result.error.message || "Unable to get payout");
+  if (!res.ok) throw new Error(result.error.message || "Unable to get payout");
 
   return result;
 };
@@ -580,7 +615,7 @@ export const updatePayout = async (
   return result;
 };
 
-//blog
+// Blog
 
 export const getBlogs = async ({
   token,
@@ -597,7 +632,7 @@ export const getBlogs = async ({
 }): Promise<BlogPostsResponse> => {
   const params = {
     page: page?.toString(),
-    per_page: per_page?.toString() ,
+    per_page: per_page?.toString(),
     sort: sort,
     search: search,
   };
@@ -608,14 +643,169 @@ export const getBlogs = async ({
       searchParams.append(key, value);
     }
   });
-  const res = await fetch(`${BASE_URL}/blog/posts?${searchParams.toString()} `, {
+  const res = await fetch(
+    `${BASE_URL}/blog/posts?${searchParams.toString()} `,
+    {
+      method: "GET",
+      headers: getHeader(token),
+    },
+  );
+
+  const result = await res.json();
+  if (!res.ok)
+    throw new Error(result.error.message || "Unable to get blog posts");
+
+  return result;
+};
+
+export const publishPost = async (token: string | null, id: number, data: PostData) => {
+ 
+  const response = await fetch(
+    `${BASE_URL}/admin/blog/posts/${id}/publish`,
+    {
+      method: "POST",
+      headers: getHeader(token),
+      body: JSON.stringify(data),
+    },
+  );
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to publish blog post");
+
+  return result;
+};
+
+export const createDraftPost = async (token: string | null, data: PostData) => {
+  const response = await fetch(`${BASE_URL}/admin/blog/posts`, {
+    method: "POST",
+    headers: getHeader(token),
+    body: JSON.stringify(data),
+  });
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(
+      result.error.message || "Unable to create blog draft posts",
+    );
+
+  return result;
+};
+
+export const createBlogTags = async (
+  token: string | null,
+  data: { name: string },
+) => {
+  const response = await fetch(`${BASE_URL}/admin/blog/tags`, {
+    method: "POST",
+    headers: getHeader(token),
+    body: JSON.stringify({ name: data.name }),
+  });
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to create blog tags");
+
+  return result;
+};
+
+export const createBlogCategories = async (
+  token: string | null,
+  data: { name: string; description?: string },
+) => {
+  const response = await fetch(`${BASE_URL}/admin/blog/categories`, {
+    method: "POST",
+    headers: getHeader(token),
+    body: JSON.stringify({ name: data.name, description: data.description }),
+  });
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to create blog categories");
+
+  return result;
+};
+
+export const createSlugComment = async (
+  token: string | null,
+  data: {
+    slug: string;
+    authorName: string;
+    authorEmail: string;
+    body: string;
+  },
+) => {
+  const response = await fetch(
+    `${BASE_URL}/admin/blog/posts/${data.slug}/comments`,
+    {
+      method: "POST",
+      headers: getHeader(token),
+      body: JSON.stringify({ name: data.authorName, email: data.authorEmail, body: data.body }),
+    },
+  );
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to create slug comment");
+
+  return result;
+};
+
+export const approvePendingComment = async (
+  token: string | null,
+  data: PostData,
+) => {
+  const response = await fetch(
+    `${BASE_URL}/admin/blog/posts/${data.id}/publish`,
+    {
+      method: "PATCH",
+      headers: getHeader(token),
+      body: JSON.stringify({}),
+    },
+  );
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to approve pending comment");
+
+  return result;
+};
+
+// Settings
+
+export const getPlatformSettings = async ({
+  token,
+}: {
+  token: string | null;
+}): Promise<PlatformConfigResponse> => {
+  const res = await fetch(`${BASE_URL}/admin/config `, {
     method: "GET",
     headers: getHeader(token),
   });
 
   const result = await res.json();
   if (!res.ok)
-    throw new Error(result.error.message || "Unable to get blog posts");
+    throw new Error(result.error.message || "Unable to get platform settings");
+
+  return result;
+};
+
+export const updatePlatformSettings = async (
+  token: string | null,
+  // configId: number,
+  settings: any,
+): Promise<PlatformConfigResponse> => {
+  const response = await fetch(`${BASE_URL}/admin/config`, {
+    method: "PATCH",
+    headers: getHeader(token),
+    body: JSON.stringify(settings),
+  });
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(
+      result.error.message || "Unable to update platform settings",
+    );
 
   return result;
 };

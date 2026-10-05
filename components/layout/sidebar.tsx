@@ -233,6 +233,10 @@ export default function Sidebar({
     }
   }
 
+  const handleItem = (item: SidebarItem) => {
+    setActive(item.subTitle || item.label)
+    setShowSidebar(false)
+  }
   return (
     <aside
       className={`${
@@ -292,7 +296,7 @@ export default function Sidebar({
                   <Link
                     key={iIdx}
                     href={item.link || "#"}
-                    onClick={() => setActive(item.subTitle || item.label)}
+                    onClick={() => handleItem(item)}
                     className={`w-full flex items-center ${collapsed ? "justify-center" : "justify-between"} px-3 py-2 text-[13px] rounded-md transition-colors relative ${
                       isActive
                         ? "bg-[#FFF4EE] text-aorange font-medium border-l-2"

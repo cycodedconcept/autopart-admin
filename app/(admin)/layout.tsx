@@ -31,7 +31,7 @@ import { ToastContainer } from "react-toastify";
 
       <div className="flex-1 flex flex-col min-w-0">
         <TopHeader />
-        <main className="p-5 space-y-6 overflow-y-auto">
+        <main className="p-3 md:p-5 space-y-6 overflow-y-auto">
 
           {children}
           <ToastContainer/>
