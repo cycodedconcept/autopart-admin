@@ -151,7 +151,9 @@ export const DisputeDetails = ({
             <div className="flex justify-between items-center text-sm">
               <span className="text-navgray ">Payment Status</span>
 
-              <span className=" text-dark capitalize"><StatusBadge status={getDispute?.order?.paymentStatus || ""}/></span>
+              <span className=" text-dark capitalize">
+                <StatusBadge status={getDispute?.order?.paymentStatus || ""} />
+              </span>
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-navgray ">Order Value</span>
@@ -159,13 +161,14 @@ export const DisputeDetails = ({
                 {CurrencyFormat(getDispute?.order?.totalKobo)}
               </span>
             </div>
-            <div className="">
-              <CountdownTimer
+            {/* <div className=""> */}
+              {/* <CountdownTimer
                 createdAt={getDispute?.order?.createdAt || ""}
                 onTimeChange={setTimerValue}
                 remaining={true}
-              />
-            </div>
+              /> */}
+               {/* {formatSlaTime(getDispute?.slaRemainingMinutes ?? 0)} */}
+            {/* </div> */}
           </div>
         </div>
 
@@ -300,7 +303,6 @@ export const DisputeDetails = ({
               Actions
             </span>
 
-
             <button
               className="w-full py-2 px-4 bg-[#ED8936] text-white hover:bg-[#DD6B20] font-semibold text-xs rounded transition-all cursor-pointer"
               onClick={() => openReasonModal("disputestatus", "resolve")}
@@ -327,8 +329,8 @@ export const DisputeDetails = ({
                 Urgent
               </span>
               <span className="text-xs text-[#C53030] block">
-                {formatSlaTime(getDispute?.slaRemainingMinutes ?? 0)} 
-              
+                {formatSlaTime(getDispute?.slaRemainingMinutes ?? 0)}
+
                 <span> before SLA breach</span>
               </span>
             </div>

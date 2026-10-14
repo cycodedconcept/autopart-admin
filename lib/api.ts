@@ -1,6 +1,11 @@
 import { useAuthStore } from "@/store/authStore";
 import { AdminProfileResponse } from "@/types/admin";
 import { LoginFormData } from "@/types/auth";
+import {
+  BlogCategoriesResponse,
+  BlogCommentsResponse,
+  BlogPostsResponse,
+} from "@/types/blog";
 import { CategoryApiResponse } from "@/types/category";
 import { FetchCompaniesResponse, OnboardPartnerPayload } from "@/types/company";
 import { PlatformConfigResponse } from "@/types/configPlatform";
@@ -469,6 +474,43 @@ export const fetchCompanies = async (
   return result;
 };
 
+export const fetchCompaniesDeliveryJobs = async (
+  token: string | null,
+  page?: number,
+  status?: string,
+  companyId?: string,
+  riderId?: string,
+): Promise<FetchCompaniesResponse> => {
+  const params = {
+    page: page?.toString(),
+    limit: "10",
+    status: status,
+    companyId: companyId,
+    riderId: riderId,
+  };
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    // Only append if the value is not an empty string
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.append(key, value);
+    }
+  });
+
+  const response = await fetch(
+    `${BASE_URL}/admin/delivery-jobs?${searchParams.toString()}`,
+    {
+      method: "GET",
+      headers: getHeader(token),
+    },
+  );
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to fetch delivery jobs");
+
+  return result;
+};
+
 export const fetchCompaniesRiders = async (
   token: string | null,
   page?: number,
@@ -658,16 +700,57 @@ export const getBlogs = async ({
   return result;
 };
 
-export const publishPost = async (token: string | null, id: number, data: PostData) => {
- 
-  const response = await fetch(
-    `${BASE_URL}/admin/blog/posts/${id}/publish`,
+export const getBlogsCategories = async ({
+  token,
+  page,
+  per_page,
+  sort,
+  search,
+}: {
+  token: string | null;
+  page?: number | null;
+  per_page?: number | null;
+  sort?: string | null;
+  search?: string | null;
+}): Promise<BlogCategoriesResponse> => {
+  const params = {
+    page: page?.toString(),
+    per_page: per_page?.toString(),
+    sort: sort,
+    search: search,
+  };
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    // Only append if the value is not an empty string
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.append(key, value);
+    }
+  });
+  const res = await fetch(
+    `${BASE_URL}/admin/blog/categories?${searchParams.toString()} `,
     {
-      method: "POST",
+      method: "GET",
       headers: getHeader(token),
-      body: JSON.stringify(data),
     },
   );
+
+  const result = await res.json();
+  if (!res.ok)
+    throw new Error(result.error.message || "Unable to get blog categories");
+
+  return result;
+};
+
+export const publishPost = async (
+  token: string | null,
+  id: number,
+  data: PostData,
+) => {
+  const response = await fetch(`${BASE_URL}/admin/blog/posts/${id}/publish`, {
+    method: "POST",
+    headers: getHeader(token),
+    body: JSON.stringify(data),
+  });
 
   const result = await response.json();
   if (!response.ok)
@@ -735,14 +818,15 @@ export const createSlugComment = async (
     body: string;
   },
 ) => {
-  const response = await fetch(
-    `${BASE_URL}/admin/blog/posts/${data.slug}/comments`,
-    {
-      method: "POST",
-      headers: getHeader(token),
-      body: JSON.stringify({ name: data.authorName, email: data.authorEmail, body: data.body }),
-    },
-  );
+  const response = await fetch(`${BASE_URL}/blog/posts/${data.slug}/comments`, {
+    method: "POST",
+    headers: getHeader(token),
+    body: JSON.stringify({
+      authorName: data.authorName,
+      authorEmail: data.authorEmail,
+      body: data.body,
+    }),
+  });
 
   const result = await response.json();
   if (!response.ok)
@@ -751,22 +835,82 @@ export const createSlugComment = async (
   return result;
 };
 
-export const approvePendingComment = async (
-  token: string | null,
-  data: PostData,
-) => {
-  const response = await fetch(
-    `${BASE_URL}/admin/blog/posts/${data.id}/publish`,
+export const getBlogComments = async ({
+  token,
+  page,
+  limit,
+  status,
+  postId,
+  search,
+}: {
+  token: string | null;
+  page?: number | null;
+  limit?: number | null;
+  status?: string | null;
+  postId?: number | null;
+  search?: string | null;
+}): Promise<BlogCommentsResponse> => {
+  const params = {
+    page: page?.toString(),
+    limit: limit?.toString(),
+    status: status,
+    postId: postId?.toString(),
+    search: search,
+  };
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    // Only append if the value is not an empty string
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.append(key, value);
+    }
+  });
+  const res = await fetch(
+    `${BASE_URL}/admin/blog/comments?${searchParams.toString()}`,
     {
-      method: "PATCH",
+      method: "GET",
       headers: getHeader(token),
-      body: JSON.stringify({}),
     },
   );
 
+  const result = await res.json();
+  if (!res.ok)
+    throw new Error(result.error.message || "Unable to get blog comments");
+
+  return result;
+};
+
+export const approvePendingComment = async (
+  token: string | null,
+  data: { id: number | string; status?: string },
+) => {
+  const response = await fetch(`${BASE_URL}/admin/blog/comments/${data.id}`, {
+    method: "PATCH",
+    headers: getHeader(token),
+    body: JSON.stringify({ status: data.status ?? "approved" }),
+  });
+
   const result = await response.json();
   if (!response.ok)
-    throw new Error(result.error.message || "Unable to approve pending comment");
+    throw new Error(
+      result.error.message || "Unable to approve pending comment",
+    );
+
+  return result;
+};
+
+export const createDeliveryZone = async (
+  token: string | null,
+  data: { name: string; state: string; city: string },
+) => {
+  const response = await fetch(`${BASE_URL}/admin/logistics/zones`, {
+    method: "POST",
+    headers: getHeader(token),
+    body: JSON.stringify(data),
+  });
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to create delivery zone");
 
   return result;
 };

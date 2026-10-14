@@ -26,7 +26,6 @@ export default function DashboardPage() {
   const router = useRouter()
   // Fetch your data here at the page level
   const { data, isPending, isError, error } = useDashboardQuery();
-  console.log(data);
 
   const handleViewAllSellers = () => {
     router.push("/sellers/verification-queue")
@@ -145,7 +144,7 @@ export default function DashboardPage() {
             </div>
             <RecentActivity activities={data?.data?.recentActivity} />
             <PayoutQueue
-              data={mockPayouts}
+              data={data?.data?.payoutQueue.items}
               onViewAll={() => console.log("View all click event triggered")}
               onApprove={(id) =>
                 console.log(`Approved payout row item matching ID: ${id}`)

@@ -6,13 +6,9 @@ import AnalyticsHeader from "@/components/platform/analyticsHeader";
 import OrderChart from "@/components/platform/orderChart";
 import CategoryDistribution from "@/components/platform/categoryDistribution";
 import TopSellersTable from "@/components/platform/topSellersTable";
-import {
-  usePlatformAnalyticsQuery,
-} from "@/lib/queries";
+import { usePlatformAnalyticsQuery } from "@/lib/queries";
 import CurrencyFormat from "@/components/atoms/currencyFormat";
 import { useState } from "react";
-
-
 
 const Platform = () => {
   const [period, setPeriod] = useState("7d");
@@ -23,7 +19,7 @@ const Platform = () => {
   );
 
   const platform = data?.data;
- 
+
   const handleFilterChange = (newRange: string) => {
     setPeriod(newRange);
   };
@@ -131,12 +127,13 @@ const Platform = () => {
               data={platform?.ordersByWeek}
               title={getDynamicTitleOrder()}
               selectedFilter={period}
-
             />
           </section>
           <section className="space-y-4">
             <CategoryDistribution />
-           {platform?.topSellers && <TopSellersTable sellers={platform?.topSellers || []} />}
+            {platform?.topSellers && (
+              <TopSellersTable sellers={platform?.topSellers || []} />
+            )}
           </section>
         </>
       )}

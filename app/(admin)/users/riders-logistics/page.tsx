@@ -252,14 +252,14 @@ export default function RidersAndLogistics() {
       {/* Header section */}
       <div className="mb-4 flex justify-between items-start md:items-center">
         <div>
-          <h1 className="text-xl font-medium text-dark">Riders & Logisticss</h1>
+          <h1 className="text-xl font-medium text-dark">Riders & Logistics</h1>
           <p className="text-xs text-navgray mt-0.5">
             Manage logistics companies and delivery riders.
           </p>
         </div>
 
         <button
-          className="flex items-center md:gap-1.5 bg-aorange hover:bg-gray-50 text-white px-1 py-1.5 md:px-3 md:py-2.5 rounded-lg text-xs md:text-sm transition"
+          className="flex items-center md:gap-1.5 bg-aorange hover:bg-orange-600 cursor-pointer text-white px-1 py-1.5 md:px-3 md:py-2.5 rounded-lg text-xs md:text-sm transition"
           onClick={() => setIsModalOpen(true)}
         >
           <PlusIcon className="w-5" />

@@ -179,7 +179,7 @@ const payoutApprovals: React.FC = () => {
       } as any);
     }
   };
-const realData = data?.data?.payouts
+  const realData = data?.data?.payouts;
   const getData = useCallback(() => {
     return realData?.find((each: PayoutRecord) => each.id === selectedPayoutId);
   }, [selectedPayoutId]);
@@ -203,13 +203,13 @@ const realData = data?.data?.payouts
   };
 
   const pending =
-    realData?.filter((b:PayoutRecord) => b.status === "pending").length || 0;
+    realData?.filter((b: PayoutRecord) => b.status === "pending").length || 0;
 
   const approved =
-    realData?.filter((b:PayoutRecord) => b.status === "approved").length || 0;
+    realData?.filter((b: PayoutRecord) => b.status === "approved").length || 0;
 
   const requested =
-    realData?.filter((b:PayoutRecord) => b.status === "requested").length || 0;
+    realData?.filter((b: PayoutRecord) => b.status === "requested").length || 0;
 
   const rejected =
     realData?.filter((b: PayoutRecord) => b.status === "rejected").length || 0;
@@ -308,7 +308,7 @@ const realData = data?.data?.payouts
                           <StatusBadge status={payout?.status} />
 
                           {/* Action Button */}
-                          
+
                           <ActionsMenuPayout
                             isOpen={openMenuId === payout.id}
                             onToggle={() =>
@@ -320,7 +320,6 @@ const realData = data?.data?.payouts
                               handleAction(payout.id, action)
                             }
                           />
-                          
                         </div>
                       </div>
                     );
@@ -340,7 +339,10 @@ const realData = data?.data?.payouts
           />
         </div>
       ) : (
-        <PayoutDetails payout={getData() || null} onClose={handleCloseProfile} />
+        <PayoutDetails
+          payout={getData() || null}
+          onClose={handleCloseProfile}
+        />
       )}
     </>
   );

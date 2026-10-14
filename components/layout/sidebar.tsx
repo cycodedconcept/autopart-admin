@@ -30,12 +30,15 @@ import {
 } from "../atoms/Icons";
 import Link from "next/link";
 import { useAuthStore } from "@/store/authStore";
+import { useBlogCommentsQuery, useDashboardQuery } from "@/lib/queries";
+
+type BadgeKey = "verification" | "disputes" | "payouts" | "comments";
 
 interface SidebarItem {
   icon: React.ComponentType<{ size: number; color: string }>;
   label: string;
   active?: boolean;
-  badge?: number;
+  badgeKey?: BadgeKey;
   link: string;
   subTitle?: string;
 }
@@ -45,7 +48,7 @@ interface SidebarSection {
   items: SidebarItem[];
 }
 
-const navigationSections: SidebarSection[] = [
+export const navigationSections: SidebarSection[] = [
   {
     title: "Overview",
     items: [
@@ -70,7 +73,7 @@ const navigationSections: SidebarSection[] = [
       {
         icon: ShieldCheckIcon,
         label: "Verification queue",
-        badge: 7,
+        badgeKey: "verification",
         link: "/sellers/verification-queue",
         subTitle: "Verification queue",
       },
@@ -107,7 +110,7 @@ const navigationSections: SidebarSection[] = [
       {
         icon: AlertTriangle,
         label: "Disputes",
-        badge: 3,
+        badgeKey: "disputes",
         link: "/orders/disputes",
         subTitle: "Disputes",
       },
@@ -147,7 +150,7 @@ const navigationSections: SidebarSection[] = [
       {
         icon: WalletIcon,
         label: "Payout approvals",
-        badge: 5,
+        badgeKey: "payouts",
         link: "/finance/payout-approvals",
         subTitle: "Payout approvals",
       },
@@ -179,7 +182,7 @@ const navigationSections: SidebarSection[] = [
       {
         icon: MessageCircle,
         label: "Comments",
-        badge: 3,
+        badgeKey: "comments",
         link: "/content/comments",
         subTitle: "Comments",
       },
@@ -232,6 +235,16 @@ export default function Sidebar({
       initials = first;
     }
   }
+
+  const { data: dashboard } = useDashboardQuery();
+  const { data: pendingComments } = useBlogCommentsQuery(1, 1, "pending");
+  const alerts = dashboard?.data?.alerts;
+  const badgeCounts: Record<BadgeKey, number> = {
+    verification: alerts?.pendingVerifications?.count ?? 0,
+    disputes: alerts?.openDisputes?.count ?? 0,
+    payouts: alerts?.payoutRequests?.count ?? 0,
+    comments: pendingComments?.data?.pagination?.total ?? 0,
+  };
 
   const handleItem = (item: SidebarItem) => {
     setActive(item.subTitle || item.label)
@@ -292,6 +305,7 @@ export default function Sidebar({
                 const IconComponent = item.icon;
                 const isActive = pathname === item.link;
                 const col = isActive ? "#FF7101" : "#525866";
+                const badge = item.badgeKey ? badgeCounts[item.badgeKey] : 0;
                 return (
                   <Link
                     key={iIdx}
@@ -311,7 +325,7 @@ export default function Sidebar({
                       </span>
                       {!collapsed && <span>{item.label}</span>}
                     </div>
-                    {item.badge && (
+                    {badge > 0 && (
                       <span
                         className={`px-1.5 py-0.5 text-[10px] font-bold rounded-full ${
                           isActive
@@ -319,7 +333,7 @@ export default function Sidebar({
                             : "bg-orange-500 text-white"
                         } ${collapsed ? "absolute -top-1" : "relative"}`}
                       >
-                        {item.badge}
+                        {badge}
                       </span>
                     )}
                   </Link>

@@ -10,9 +10,10 @@ import {
   SettingsCard,
   SettingsSubNav,
 } from "@/components/settings/settingsCard";
-import { Sparkles, UserKey } from "lucide-react";
+import { Globe, Sparkles, UserKey } from "lucide-react";
 import { RolesManagementView } from "@/components/settings/roleManagementView";
 import { useUpdatePlatformSettingsMutation } from "@/lib/queries";
+import DeliveryZoneForm from "@/components/settings/deliveryZoneForm";
 
 // Structure mirroring your expected API body
 interface ApiConfigData {
@@ -44,13 +45,14 @@ export default function SettingsDashboard() {
   const [formData, setFormData] = useState<ApiConfigData>({
     commissionRateDefault: 0, // Used in "Marketplace defaults"
     commissionRatesByCategory: [],
-         categoryId: 0, 
-            commissionRateCategory: 0 ,
+    categoryId: 0,
+    commissionRateCategory: 0,
     commissionRatesBySellerTier: [],
-         tier: "", commissionRateSeller: 0 ,
-    
+    tier: "",
+    commissionRateSeller: 0,
+
     platformSettings: {
-      payoutBatchCutoffHour: 0, 
+      payoutBatchCutoffHour: 0,
     },
     platformName: "",
     publicUrl: "",
@@ -79,38 +81,45 @@ export default function SettingsDashboard() {
   const menuItems = [
     { id: "general", label: "General", icon: Sparkles },
     { id: "roles", label: "Roles & permissions", icon: UserKey },
+    { id: "delivery", label: "Delivery zones", icon: Globe },
   ];
 
-  const updateSettings = useUpdatePlatformSettingsMutation()
+  const updateSettings = useUpdatePlatformSettingsMutation();
   // Handler to pack everything together for your API submission
   const handleSave = () => {
-    
-  const payload = {
-    commissionRateDefault: Number(formData.commissionRateDefault),
-    commissionRatesByCategory: [{categoryId: formData.categoryId, ratePecent:formData.commissionRateCategory}],
-    commissionRatesBySellerTier: [{tier: formData.tier, ratePecent:formData.commissionRateSeller}],
-    
-    // Maps the dashboard configuration directly to platformSettings
-    platformSettings: {
-      payoutBatchCutoffHour: formData.platformSettings.payoutBatchCutoffHour,
-      platformName: formData.platformName,
-      publicUrl: formData.publicUrl,
-      supportEmail: formData.supportEmail,
-      supportPhone: formData.supportPhone,
-      timezone: formData.timezone,
-      defaultCurrency: formData.defaultCurrency,
-      minimumPayout: formData.minimumPayout,
-      payoutHoldPeriod: formData.payoutHoldPeriod,
-      toggles: { 
-        autoApprove, 
-        requireCac, 
-        allowGuest, 
-        maintenanceMode 
-      }
-    }
-  };
+    const payload = {
+      commissionRateDefault: Number(formData.commissionRateDefault),
+      commissionRatesByCategory: [
+        {
+          categoryId: formData.categoryId,
+          ratePecent: formData.commissionRateCategory,
+        },
+      ],
+      commissionRatesBySellerTier: [
+        { tier: formData.tier, ratePecent: formData.commissionRateSeller },
+      ],
 
-    updateSettings.mutate({settings:payload})
+      // Maps the dashboard configuration directly to platformSettings
+      platformSettings: {
+        payoutBatchCutoffHour: formData.platformSettings.payoutBatchCutoffHour,
+        platformName: formData.platformName,
+        publicUrl: formData.publicUrl,
+        supportEmail: formData.supportEmail,
+        supportPhone: formData.supportPhone,
+        timezone: formData.timezone,
+        defaultCurrency: formData.defaultCurrency,
+        minimumPayout: formData.minimumPayout,
+        payoutHoldPeriod: formData.payoutHoldPeriod,
+        toggles: {
+          autoApprove,
+          requireCac,
+          allowGuest,
+          maintenanceMode,
+        },
+      },
+    };
+
+    updateSettings.mutate({ settings: payload });
   };
 
   return (
@@ -161,7 +170,9 @@ export default function SettingsDashboard() {
                   label="Default Currency"
                   options={["NGN — Nigerian Naira (₦)", "USD — US Dollar ($)"]}
                   value={formData.defaultCurrency}
-                  onChange={(e) => updateField("defaultCurrency", e.target.value)}
+                  onChange={(e) =>
+                    updateField("defaultCurrency", e.target.value)
+                  }
                 />
               </div>
             </SettingsCard>
@@ -176,7 +187,9 @@ export default function SettingsDashboard() {
                   label="Commission Rate Category"
                   type="number"
                   value={formData.commissionRateCategory}
-                  onChange={(e) => updateField("commissionRateCategory", e.target.value)}
+                  onChange={(e) =>
+                    updateField("commissionRateCategory", e.target.value)
+                  }
                   suffix="%"
                 />
                 <FormInput
@@ -185,10 +198,12 @@ export default function SettingsDashboard() {
                   onChange={(e) => updateField("minimumPayout", e.target.value)}
                   prefixSymbol="₦"
                 />
-                <FormInput 
-                  label="Payout Hold Period" 
-                  value={formData.payoutHoldPeriod} 
-                  onChange={(e) => updateField("payoutHoldPeriod", e.target.value)}
+                <FormInput
+                  label="Payout Hold Period"
+                  value={formData.payoutHoldPeriod}
+                  onChange={(e) =>
+                    updateField("payoutHoldPeriod", e.target.value)
+                  }
                 />
               </div>
               <div className="grid grid-cols-3 gap-5 border-b border-slate-100 pb-6">
@@ -196,14 +211,15 @@ export default function SettingsDashboard() {
                   label="Commission Rate Seller"
                   type="number"
                   value={formData.commissionRateSeller}
-                  onChange={(e) => updateField("commissionRateSeller", e.target.value)}
+                  onChange={(e) =>
+                    updateField("commissionRateSeller", e.target.value)
+                  }
                   suffix="%"
                 />
                 <FormInput
                   label="Tier"
                   value={formData.tier}
                   onChange={(e) => updateField("tier", e.target.value)}
-                  
                 />
                 {/* <FormInput 
                   label="Payout Hold Period" 
@@ -250,15 +266,15 @@ export default function SettingsDashboard() {
                 type="button"
                 onClick={handleSave}
                 disabled={updateSettings.isPending}
-                className={`${updateSettings.isPending? "bg-agray opacity-30 text-dark" : "bg-aorange hover:bg-orange-600 cursor-pointer text-white"} text-sm font-medium py-2 px-6 rounded-lg  transition-colors `}
+                className={`${updateSettings.isPending ? "bg-agray opacity-30 text-dark" : "bg-aorange hover:bg-orange-600 cursor-pointer text-white"} text-sm font-medium py-2 px-6 rounded-lg  transition-colors `}
               >
-                {updateSettings.isPending? "Saving..." :"Save Settings"}
+                {updateSettings.isPending ? "Saving..." : "Save Settings"}
               </button>
             </div>
           </div>
-        ) : (
+        ) : activeTab === "roles" ? (
           <RolesManagementView />
-        )}
+        ): <DeliveryZoneForm/>}
       </div>
     </div>
   );

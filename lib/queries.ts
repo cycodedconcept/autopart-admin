@@ -39,6 +39,9 @@ import {
   createBlogCategories,
   createSlugComment,
   approvePendingComment,
+  getBlogsCategories,
+  getBlogComments,
+  createDeliveryZone,
 } from "./api";
 import { useAuthStore } from "@/store/authStore";
 import { ApiErrorPayload, AuthUserResponse, LoginFormData } from "@/types/auth";
@@ -203,6 +206,7 @@ export const useApproveVerification = () => {
     }) => approveSeller({ token, id, verificationStatus }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["sellers"] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.dashboard });
 
       if (data?.message) {
         toast.success(data.message);
@@ -232,6 +236,7 @@ export const useRejectVerification = () => {
     }) => rejectSeller({ token, id, verificationStatus, reason }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["sellers"] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.dashboard });
 
       if (data?.message) {
         toast.success(data.message);
@@ -406,6 +411,7 @@ export const useDisputeStatusQuery = () => {
     }) => updateDisputeStatus(token, disputeId, status, note),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["disputes"] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.dashboard });
 
       if (data?.message) {
         toast.success(data.message);
@@ -566,6 +572,7 @@ export const useUpdatePayoutMutation = () => {
     }) => updatePayout(token, id, status, note),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["payouts"] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.dashboard });
 
       if (data?.message) {
         toast.success(data.message);
@@ -600,11 +607,32 @@ export const useBlogsQuery = (
   });
 };
 
+export const useGetBlogsCategories = (
+  page?: number,
+  per_page?: number,
+  sort?: string,
+  search?: string,
+) => {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    // 1. Sync Driver: The key registers variables as absolute dependencies
+    queryKey: ["blogs-categories", { page, per_page, sort, search }],
+    // 2. Resolver: Automatically passes changing keys into your API client call
+    queryFn: () => getBlogsCategories({ token, page, per_page, sort, search }),
+    // 3. UX Optimization: Prevents the UI layout from flickering/blanking out during fetches
+    placeholderData: keepPreviousData,
+    enabled: !!token,
+    // Optional: Tailor cache lifetimes based on how fluid your queue data shifts
+    staleTime: 5000,
+  });
+};
+
 export const usePublishBlogQueryMutation = () => {
   const queryClient = useQueryClient();
   const token = useAuthStore((state) => state.token);
   return useMutation({
-    mutationFn: ({ id,data }: { id: number,data: any }) => publishPost(token,id, data),
+    mutationFn: ({ id, data }: { id: number; data: any }) =>
+      publishPost(token, id, data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["blogs"] });
 
@@ -683,6 +711,7 @@ export const useSlugCommentQueryMutation = () => {
     mutationFn: ({ data }: { data: any }) => createSlugComment(token, data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["blogs"] });
+      queryClient.invalidateQueries({ queryKey: ["blogComments"] });
 
       if (data?.message) {
         toast.success(data.message);
@@ -692,6 +721,22 @@ export const useSlugCommentQueryMutation = () => {
       const errMsg = error?.message || "An error occurred";
       toast.error(errMsg);
     },
+  });
+};
+
+export const useBlogCommentsQuery = (
+  page?: number,
+  limit?: number,
+  status?: string,
+  search?: string,
+) => {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    queryKey: ["blogComments", page, limit, status, search],
+    queryFn: () => getBlogComments({ token, page, limit, status, search }),
+    placeholderData: keepPreviousData,
+    enabled: !!token,
+    staleTime: 5000,
   });
 };
 
@@ -702,6 +747,7 @@ export const useApproveCommentQueryMutation = () => {
     mutationFn: ({ data }: { data: any }) => approvePendingComment(token, data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["blogs"] });
+      queryClient.invalidateQueries({ queryKey: ["blogComments"] });
 
       if (data?.message) {
         toast.success(data.message);
@@ -714,6 +760,28 @@ export const useApproveCommentQueryMutation = () => {
   });
 };
 
+export const useCreateDeliveryZoneMutation = () => {
+  const queryClient = useQueryClient();
+  const token = useAuthStore((state) => state.token);
+  return useMutation({
+    mutationFn: ({
+      data,
+    }: {
+      data: { name: string; state: string; city: string };
+    }) => createDeliveryZone(token, data),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["deliveryZones"] });
+
+      if (data?.message) {
+        toast.success(data.message);
+      }
+    },
+    onError: (error: any) => {
+      const errMsg = error?.message || "An error occurred";
+      toast.error(errMsg);
+    },
+  });
+};
 
 // Settings
 

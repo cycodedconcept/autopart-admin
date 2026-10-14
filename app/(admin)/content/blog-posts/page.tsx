@@ -41,7 +41,7 @@ const BlogPosts = () => {
     setSearchTerm(newVal);
     setPage(1); // Reset page safely to index 1 if search query changes
   };
- 
+
   const totalPagesCount = data?.data?.pagination?.totalPages || 1;
   const filteredOrders = data?.data?.posts?.filter((post) => {
     const matchesSearch = post?.author?.displayName
@@ -50,16 +50,17 @@ const BlogPosts = () => {
     // const matchesTab =
     //   activeTab === "all" ||
     //   post?.status.toLowerCase() === activeTab.toLowerCase();
-    return matchesSearch ;
+    return matchesSearch;
   });
 
   const totalPost = data?.data?.posts.length;
-//   const completed = data?.data?.posts?.filter(
-//     (each) => each.status === "delivered",
-//   ).length;
-//   const disputed = data?.data?.posts?.filter(
-//     (each) => each.status === "disputed",
-//   ).length;
+ 
+  //   const completed = data?.data?.posts?.filter(
+  //     (each) => each.status === "delivered",
+  //   ).length;
+  //   const disputed = data?.data?.posts?.filter(
+  //     (each) => each.status === "disputed",
+  //   ).length;
 
   const handleAction = (id: number, action: string) => {
     // if (action === "View details") {
@@ -68,9 +69,12 @@ const BlogPosts = () => {
     //   } as any);
     // }
     if (action === "Edit post") {
-      return router.push(`/content/blog-posts/addEdit?postid=${id}&page=${page}`, {
-        shallow: true,
-      } as any);
+      return router.push(
+        `/content/blog-posts/addEdit?postid=${id}&page=${page}`,
+        {
+          shallow: true,
+        } as any,
+      );
     }
   };
 
@@ -97,7 +101,7 @@ const BlogPosts = () => {
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
         <MetricCard
-          title="Total Orders"
+          title="Total Posts"
           value={totalPost}
           valueStyle="text-dark text-xl font-bold"
           divStyle=""
@@ -152,7 +156,7 @@ const BlogPosts = () => {
             </div>
             <div className="flex self-end items-center gap-4">
               <div
-                className="relative flex items-center gap-1 border border-lightborder rounded-lg text-navgray text-sm pointer-cursor px-1 py-1.5 md:px-3 md:py-2"
+                className="relative flex items-center gap-1 border border-lightborder rounded-lg text-navgray text-sm cursor-pointer px-1 py-1.5 md:px-3 md:py-2"
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
               >
                 <ListFilter size={13} />
@@ -163,19 +167,19 @@ const BlogPosts = () => {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <button
-                      className="w-full text-left px-2 py-1 hover:bg-gray-100 rounded text-sm transition"
+                      className="w-full text-left px-2 py-1 hover:bg-gray-100 rounded text-sm transition cursor-pointer"
                       onClick={() => handleSort("latest")}
                     >
                       Latest
                     </button>
                     <button
-                      className="w-full text-left px-2 py-1 hover:bg-gray-100 rounded text-sm transition"
+                      className="w-full text-left px-2 py-1 hover:bg-gray-100 rounded text-sm transition cursor-pointer"
                       onClick={() => handleSort("oldest")}
                     >
                       Oldest
                     </button>
                     <button
-                      className="w-full text-left px-2 py-1 hover:bg-gray-100 rounded text-sm transition"
+                      className="w-full text-left px-2 py-1 hover:bg-gray-100 rounded text-sm transition cursor-pointer"
                       onClick={() => handleSort("title_asc")}
                     >
                       Ascending
@@ -185,7 +189,7 @@ const BlogPosts = () => {
               </div>
               <button
                 className="flex items-center md:gap-1.5 bg-aorange hover:bg-orange-500 cursor-pointer text-white px-1 py-1.5 md:px-3 md:py-2 rounded-lg text-xs md:text-sm transition"
-                  onClick={() => router.push("/content/blog-posts/addEdit")}
+                onClick={() => router.push("/content/blog-posts/addEdit")}
               >
                 <PlusIcon className="w-5" />
                 <span className="">New Post</span>

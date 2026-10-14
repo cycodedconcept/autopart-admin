@@ -38,18 +38,17 @@ const Disputes = () => {
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<
-    "all" | "open" | "rejected" | "resolved"
+    "all" | "open" | "rejected" | "resolved" | "in_review" | string
   >("all");
   const [raisedBy, setRaisedBy] = useState("");
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-  } = useDisputesQuery(page, activeTab, searchTerm, raisedBy);
+  const { data, isLoading, isError, error } = useDisputesQuery(
+    page,
+    activeTab,
+    searchTerm,
+    raisedBy,
+  );
 
- 
   const searchParams = useSearchParams();
   const router = useRouter();
   const [timerValue, setTimerValue] = useState("");
@@ -86,6 +85,16 @@ const Disputes = () => {
     }
   };
 
+  const openD = data?.data?.disputes?.filter(
+    (each) => each.status === "open",
+  ).length;
+  const inReviewD = data?.data?.disputes?.filter(
+    (each) => each.status === "in_review",
+  ).length;
+  const resolvedD = data?.data?.disputes?.filter(
+    (each) => each.status === "resolved",
+  ).length;
+
   return showProfile ? (
     isLoading ? (
       <div className="flex justify-center items-center h-64">
@@ -114,19 +123,19 @@ const Disputes = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <MetricCard
           title="Open Disputes"
-          value="87"
+          value={openD}
           valueStyle="text-dark text-xl font-bold"
           divStyle=""
         />
         <MetricCard
           title="Escalated"
-          value="7"
+          value={inReviewD}
           valueStyle="text-[#00A63E] text-xl font-bold"
           divStyle=""
         />
         <MetricCard
           title="Resolved This Month"
-          value="7"
+          value={resolvedD}
           valueStyle="text-[#E7000B] text-xl font-bold"
           divStyle=""
         />
@@ -136,15 +145,17 @@ const Disputes = () => {
         <div className="flex flex-col md:flex-row items-center gap-4 mb-2 pb-2">
           {/* Search */}
           <SearchInput
-            className="w-2/5"
+            className="w-full md:w-2/5"
             padd="py-3 px-4"
             value={searchTerm}
             onChange={handleSearchChange}
           />
 
           {/* Tab Filters */}
-          <div className="flex items-center gap-2">
-            {(["all", "open", "rejected", "resolved"] as const).map((tab) => (
+          <div className=" flex items-center gap-2 max-w-full overflow-x-auto ">
+            {(
+              ["all", "open", "rejected", "resolved", "in_review"] as const
+            ).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}

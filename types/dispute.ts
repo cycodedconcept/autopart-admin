@@ -15,7 +15,7 @@ export interface Dispute {
   orderId: number;
   raisedBy: 'buyer' | 'seller'; // Add other actors if applicable
   reason: string;
-  status: 'open' | 'resolved' | 'closed'; // Extend based on your workflow
+  status: 'open' | 'resolved' | 'closed' | string; // Extend based on your workflow
   resolutionNote: string | null;
   refundReference: string | null;
   refundAmountKobo: number | null;
