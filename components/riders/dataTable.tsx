@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import { ActionsMenuSeller } from "../atoms/actionMenuSeller";
 import { ActionsMenuLogistics } from "./actionMenu";
 
@@ -12,12 +13,14 @@ interface DataTableProps<T> {
   columns: Column<T>[];
   data: T[];
   onActionClick?: (id: number, action: string) => void;
+  isLoading?: boolean;
 }
 
 export function DataTable<T extends { id: number }>({
   columns,
   data,
   onActionClick,
+  isLoading,
 }: DataTableProps<T>) {
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
 
@@ -44,7 +47,13 @@ export function DataTable<T extends { id: number }>({
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
-          {data.length > 0 ? (
+          {isLoading ? (
+            <tr>
+              <td colSpan={columns.length + 1} className="py-10">
+                <Loader2 className="w-5 h-5 animate-spin text-navgray mx-auto" />
+              </td>
+            </tr>
+          ) : data.length > 0 ? (
             data.map((item: T, rowIdx: number) => {
               return (
                 <tr

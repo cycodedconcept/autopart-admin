@@ -8,6 +8,10 @@ import {
 } from "@/types/blog";
 import { CategoryApiResponse } from "@/types/category";
 import { FetchCompaniesResponse, OnboardPartnerPayload } from "@/types/company";
+import {
+  AssignDeliveryJobPayload,
+  FetchDeliveryJobsResponse,
+} from "@/types/deliveryJob";
 import { PlatformConfigResponse } from "@/types/configPlatform";
 import { AdminDashboardResponse } from "@/types/dashboard";
 import {
@@ -480,13 +484,15 @@ export const fetchCompaniesDeliveryJobs = async (
   status?: string,
   companyId?: string,
   riderId?: string,
-): Promise<FetchCompaniesResponse> => {
+  search?: string,
+): Promise<FetchDeliveryJobsResponse> => {
   const params = {
     page: page?.toString(),
     limit: "10",
-    status: status,
+    status: status === "all" ? "" : status,
     companyId: companyId,
     riderId: riderId,
+    search: search,
   };
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -511,15 +517,37 @@ export const fetchCompaniesDeliveryJobs = async (
   return result;
 };
 
+export const assignDeliveryJob = async (
+  token: string | null,
+  jobId: number,
+  data: AssignDeliveryJobPayload,
+) => {
+  const response = await fetch(
+    `${BASE_URL}/admin/delivery-jobs/${jobId}/assign`,
+    {
+      method: "PATCH",
+      headers: getHeader(token),
+      body: JSON.stringify(data),
+    },
+  );
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to assign delivery job");
+
+  return result;
+};
+
 export const fetchCompaniesRiders = async (
   token: string | null,
   page?: number,
   status?: string,
   companyId?: string | null,
+  limit: number = 10,
 ): Promise<FetchRidersResponse> => {
   const params = {
     page: page?.toString(),
-    limit: "10",
+    limit: limit.toString(),
     status: status,
     companyId: companyId,
   };

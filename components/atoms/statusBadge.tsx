@@ -23,6 +23,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, width }) => {
     resolved: "bg-[#DCFCE7] text-[#008236] ",
     available: "bg-[#DCFCE7] text-[#008236] ",
     confirmed: "bg-[#DBEAFE] text-[#1447E6] ",
+    assigned: "bg-[#DBEAFE] text-[#1447E6] ",
+    failed: "bg-[#FFE2E2] text-[#C10007] ",
     "in_review": "bg-[#DBEAFE] text-[#1447E6] ",
     "in_transit": "bg-[#FEF3C6] text-[#BB4D00] ",
     "requested": "bg-[#FEF3C6] text-[#BB4D00] ",

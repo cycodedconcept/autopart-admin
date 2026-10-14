@@ -42,12 +42,15 @@ import {
   getBlogsCategories,
   getBlogComments,
   createDeliveryZone,
+  fetchCompaniesDeliveryJobs,
+  assignDeliveryJob,
 } from "./api";
 import { useAuthStore } from "@/store/authStore";
 import { ApiErrorPayload, AuthUserResponse, LoginFormData } from "@/types/auth";
 import { toast } from "react-toastify";
 import { FetchRidersResponse } from "@/types/rider";
 import { FetchCompaniesResponse, OnboardPartnerPayload } from "@/types/company";
+import { AssignDeliveryJobPayload } from "@/types/deliveryJob";
 
 // 🔑 Centralized cache tracking keys
 export const QUERY_KEYS = {
@@ -444,7 +447,7 @@ export const useCompanyQuery = (
     ...options,
     // 3. UX Optimization: Prevents the UI layout from flickering/blanking out during fetches
     placeholderData: keepPreviousData,
-    enabled: !!token,
+    enabled: !!token && (options?.enabled ?? true),
 
     // Optional: Tailor cache lifetimes based on how fluid your queue data shifts
     staleTime: 5000,
@@ -459,21 +462,78 @@ export const useCompanyRiderQuery = (
     UseQueryOptions<FetchRidersResponse, Error>,
     "queryKey" | "queryFn"
   >,
+  limit?: number,
 ) => {
   const token = useAuthStore((state) => state.token);
   return useQuery({
     // 1. Sync Driver: The key registers variables as absolute dependencies
-    queryKey: ["riders", { page, status, companyId }],
+    queryKey: ["riders", { page, status, companyId, limit }],
 
     // 2. Resolver: Automatically passes changing keys into your API client call
-    queryFn: () => fetchCompaniesRiders(token, page!, status!, companyId!),
+    queryFn: () =>
+      fetchCompaniesRiders(token, page!, status!, companyId!, limit),
     ...options,
-    // 3. UX Optimization: Prevents the UI layout from flickering/blanking out during fetches
-    placeholderData: keepPreviousData,
-    enabled: !!token,
+    // 3. UX Optimization: keep the current list while paging/filtering the same
+    // company, but never show another company's riders while the new ones load
+    placeholderData: (previousData, previousQuery) =>
+      (previousQuery?.queryKey[1] as { companyId?: string | null } | undefined)
+        ?.companyId === companyId
+        ? previousData
+        : undefined,
+    enabled: !!token && (options?.enabled ?? true),
 
     // Optional: Tailor cache lifetimes based on how fluid your queue data shifts
     staleTime: 5000,
+  });
+};
+
+export const useDeliveryJobsQuery = (
+  page?: number,
+  status?: string,
+  companyId?: string,
+  riderId?: string,
+  search?: string,
+) => {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    queryKey: ["deliveryJobs", { page, status, companyId, riderId, search }],
+    queryFn: () =>
+      fetchCompaniesDeliveryJobs(token, page, status, companyId, riderId, search),
+    placeholderData: keepPreviousData,
+    enabled: !!token,
+    staleTime: 5000,
+  });
+};
+
+// All riders across companies, used for filters and manual assignment
+export const useAllRidersQuery = (limit: number = 100) => {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    queryKey: ["riders", { scope: "all", limit }],
+    queryFn: () => fetchCompaniesRiders(token, 1, "all", null, limit),
+    enabled: !!token,
+    staleTime: 1000 * 60,
+  });
+};
+
+export const useAssignDeliveryJobMutation = () => {
+  const queryClient = useQueryClient();
+  const token = useAuthStore((state) => state.token);
+  return useMutation({
+    mutationFn: ({ jobId, data }: { jobId: number; data: AssignDeliveryJobPayload }) =>
+      assignDeliveryJob(token, jobId, data),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["deliveryJobs"] });
+      queryClient.invalidateQueries({ queryKey: ["riders"] });
+
+      if (data?.message) {
+        toast.success(data.message);
+      }
+    },
+    onError: (error: any) => {
+      const errMsg = error?.message || "An error occurred";
+      toast.error(errMsg);
+    },
   });
 };
 

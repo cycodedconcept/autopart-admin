@@ -19,6 +19,7 @@ import {
 import { CompanyModal } from "@/components/riders/companyModal";
 import { OnboardPartnerPayload } from "@/types/company";
 import { ActionWithReasonModal } from "@/components/verification/actionWithReason";
+import { DeliveryJobsQueue } from "@/components/riders/deliveryJobsQueue";
 
 // Mock Interfaces
 interface CompanyData {
@@ -46,9 +47,7 @@ interface RiderData {
 }
 
 export default function RidersAndLogistics() {
-  const [activeTab, setActiveTab] = useState<"companies" | "riders">(
-    "companies",
-  );
+  const [activeTab, setActiveTab] = useState<"jobs" | "companies">("jobs");
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
@@ -83,9 +82,9 @@ export default function RidersAndLogistics() {
     isError,
     error,
   } = useCompanyQuery(page, openDetails ? "all" : filter, searchTerm, {
-    enabled: !openDetails,
+    enabled: !openDetails && activeTab === "companies",
   });
-  const { data: riders } = useCompanyRiderQuery(
+  const { data: riders, isLoading: isLoadingRiders } = useCompanyRiderQuery(
     page,
     !openDetails ? "all" : filter,
     !openDetails ? null : selectedCompanyId.toString(),
@@ -277,10 +276,22 @@ export default function RidersAndLogistics() {
       )}
       {/* Tabs Layout */}
       <div className="flex bg-white p-1 rounded-lg border border-lightborder w-fit mb-5">
+        {!openDetails && (
+          <button
+            onClick={() => setActiveTab("jobs")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer ${
+              activeTab === "jobs"
+                ? "bg-aorange text-white "
+                : "text-navgray hover:text-gray-900"
+            }`}
+          >
+            Delivery jobs queue
+          </button>
+        )}
         <button
           onClick={() => setActiveTab("companies")}
           className={`px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer ${
-            activeTab === "companies"
+            activeTab === "companies" || openDetails
               ? "bg-aorange text-white "
               : "text-navgray hover:text-gray-900"
           }`}
@@ -299,82 +310,95 @@ export default function RidersAndLogistics() {
         </button> */}
       </div>
 
-      {/* Metrics Row (Conditionally shown or updated based on UI view context) */}
-      {!openDetails && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-          <MetricCard
-            title="Total companies"
-            value={companySummary?.totalCompaniesCount}
-            valueStyle="text-dark text-xl font-bold"
-            titleStyle="text-navgray font-sm"
-            divStyle=""
-          />
-          <MetricCard
-            title="Approved"
-            value={companySummary?.approvedCount}
-            valueStyle="text-dark text-xl font-bold"
-            titleStyle="text-navgray font-sm"
-            divStyle=""
-          />
-          <MetricCard
-            title="Pending"
-            value={companySummary?.pendingCount}
-            valueStyle="text-dark text-xl font-bold"
-            titleStyle="text-navgray font-sm"
-            divStyle=""
-          />
-          <MetricCard
-            title="Suspended"
-            value={companySummary?.suspendedCount}
-            // subTitle="requires attention"
-            valueStyle="text-dark text-xl font-bold"
-            titleStyle="text-navgray font-sm"
-            divStyle=""
-          />
-        </div>
-      )}
-
-      <div className="flex flex-col md:flex-row gap-4 items-center mb-4">
-        <SearchInput
-          className="w-full md:w-2/4"
-          padd="py-3 px-4"
-          placeholder="Search..."
-          value={searchTerm}
-          onChange={handleSearchChange}
-        />
-        <div className="flex items-center gap-2 max-w-md flex-wrap">
-          {(openDetails
-            ? ["all", "available", "inactive", "on_delivery", "unavailable"]
-            : (["all", "approved", "pending", "suspended"] as const)
-          ).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setFilter(tab)}
-              className={`px-3 py-1.5 rounded-full font-medium text-sm transition-all border cursor-pointer capitalize ${
-                filter === tab
-                  ? "bg-aorange text-white border-aorange"
-                  : "hover:text-gray-900 text-navgray bg-white border-lightborder"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Render Main Table Selection */}
-      {openDetails ? (
-        <DataTable
-          columns={riderColumns}
-          data={filteredRiders ?? []}
-          onActionClick={(id, action) => handleRiders(id, action)}
-        />
+      {activeTab === "jobs" && !openDetails ? (
+        <DeliveryJobsQueue />
       ) : (
-        <DataTable
-          columns={companyColumns}
-          data={filteredData ?? []}
-          onActionClick={(id, action) => handleAction(id, action)}
-        />
+        <>
+          {/* Metrics Row (Conditionally shown or updated based on UI view context) */}
+          {!openDetails && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              <MetricCard
+                title="Total companies"
+                value={companySummary?.totalCompaniesCount}
+                valueStyle="text-dark text-xl font-bold"
+                titleStyle="text-navgray font-sm"
+                divStyle=""
+              />
+              <MetricCard
+                title="Approved"
+                value={companySummary?.approvedCount}
+                valueStyle="text-dark text-xl font-bold"
+                titleStyle="text-navgray font-sm"
+                divStyle=""
+              />
+              <MetricCard
+                title="Pending"
+                value={companySummary?.pendingCount}
+                valueStyle="text-dark text-xl font-bold"
+                titleStyle="text-navgray font-sm"
+                divStyle=""
+              />
+              <MetricCard
+                title="Suspended"
+                value={companySummary?.suspendedCount}
+                // subTitle="requires attention"
+                valueStyle="text-dark text-xl font-bold"
+                titleStyle="text-navgray font-sm"
+                divStyle=""
+              />
+            </div>
+          )}
+
+          <div className="flex flex-col md:flex-row gap-4 items-center mb-4">
+            <SearchInput
+              className="w-full md:w-2/4"
+              padd="py-3 px-4"
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+            />
+            <div className="flex items-center gap-2 max-w-md flex-wrap">
+              {(openDetails
+                ? ["all", "available", "inactive", "on_delivery", "unavailable"]
+                : (["all", "approved", "pending", "suspended"] as const)
+              ).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setFilter(tab)}
+                  className={`px-3 py-1.5 rounded-full font-medium text-sm transition-all border cursor-pointer capitalize ${
+                    filter === tab
+                      ? "bg-aorange text-white border-aorange"
+                      : "hover:text-gray-900 text-navgray bg-white border-lightborder"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Render Main Table Selection */}
+          {openDetails ? (
+            <DataTable
+              columns={riderColumns}
+              data={filteredRiders ?? []}
+              onActionClick={(id, action) => handleRiders(id, action)}
+              isLoading={isLoadingRiders}
+            />
+          ) : (
+            <DataTable
+              columns={companyColumns}
+              data={filteredData ?? []}
+              isLoading={isLoading}
+              onActionClick={(id, action) => handleAction(id, action)}
+            />
+          )}
+          <Pagination
+            currentPage={page}
+            totalPages={totalPagesCount}
+            onPageChange={setPage}
+          />
+        </>
       )}
 
       <RiderProfileDrawer
@@ -402,11 +426,6 @@ export default function RidersAndLogistics() {
         placeholderText={modalConfig?.placeholder ?? ""}
         confirmButtonColor={modalConfig?.color ?? ""}
         confirmLabel={modalConfig.label}
-      />
-      <Pagination
-        currentPage={page}
-        totalPages={totalPagesCount}
-        onPageChange={setPage}
       />
     </div>
   );
