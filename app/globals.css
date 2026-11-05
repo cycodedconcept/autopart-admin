@@ -1,26 +1,80 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #F5F7FA;
   --foreground: #171717;
+  --aorange: #FF7101;
+  --dark-gray: #151515;
+  --light-gray: #575757;
+  --light-green: #17b26a;
+  --lighter-green: #1DBF73;
+  --light-red: #f04438;
+  --ared: #d92d20;
+  --agreen: #079455;
+  --apurple: #7644c3;
+  --ayellow: #fdb022;
+  --abrown: #8c3e01;
+  --apink: #d5829c;
+  --alemon: #7ed321;
+  --agray: #A5A5A5;
+  --agray-border: #D7D7D7;
+  --alight-gray-border: #EDEDED;
+  --bordercolor: #E6E8EA;
+  --primary: #020204;
+  --secondary: #625F6E;
+  --navgray:#525866;
+  --lightborder: #E1E4EA;
+  --lighttext: #99A0AE;
+  --dark: #0E121B;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  --font-satoshi: var(--font-satoshi), sans-serif;
+  --font-geist-sans: var(--font-geist-sans), sans-serif;
+  --font-geist-mono: var(--font-geist-mono), sans-serif;
+  --font-inter: var(--font-inter), sans-serif;
+
+  --color-aorange: var(--aorange);
+  --color-dark-gray: var(--dark-gray);
+  --color-light-gray: var(--light-gray);
+  --color-light-green: var(--light-green);
+  --color-lighter-green: var(--lighter-green);
+  --color-light-red: var(--light-red);
+  --color-ared: var(--ared);
+  --color-agreen: var(--agreen);
+  --color-apurple: var(--apurple);
+  --color-ayellow: var(--ayellow);
+  --color-abrown: var(--abrown);
+  --color-apink: var(--apink);
+  --color-alemon: var(--alemon);
+  --color-agray: var(--agray);
+  --color-agray-border: var(--agray-border);
+  --color-alight-gray-border: var(--alight-gray-border);
+  --color-bordercolor: var(--bordercolor);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-navgray: var(--navgray);
+  --color-lightborder: var(--lightborder);
+  --color-lighttext: var(--lighttext);
+  --color-dark: var(--dark);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-satoshi);
+  font-weight: 400;
 }
+
+
+/* Target the last horizontal grid line (Last Row) */
+.recharts-cartesian-grid-horizontal line:first-child {
+  stroke-dasharray: none !important;
+  stroke: #666666;
+}
+
+
