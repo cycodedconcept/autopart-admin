@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 
-// --- MOCK CAROUSEL SLIDES DATA ---
-// Replace placeholders with your own image imports or asset paths
+// --- CAROUSEL SLIDES DATA ---
+
 const CAROUSEL_SLIDES = [
   {
     id: 1,
