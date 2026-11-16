@@ -1,0 +1,983 @@
+import { useAuthStore } from "@/store/authStore";
+import { AdminProfileResponse } from "@/types/admin";
+import { LoginFormData } from "@/types/auth";
+import {
+  BlogCategoriesResponse,
+  BlogCommentsResponse,
+  BlogPostsResponse,
+} from "@/types/blog";
+import { CategoryApiResponse } from "@/types/category";
+import { FetchCompaniesResponse, OnboardPartnerPayload } from "@/types/company";
+import {
+  AssignDeliveryJobPayload,
+  FetchDeliveryJobsResponse,
+} from "@/types/deliveryJob";
+import { PlatformConfigResponse } from "@/types/configPlatform";
+import { AdminDashboardResponse } from "@/types/dashboard";
+import {
+  Dispute,
+  DisputeDetailsResponse,
+  DisputeResponse,
+} from "@/types/dispute";
+import { OrderDetailsResponse, OrderListApiResponse } from "@/types/order";
+import { FetchPayoutsResponse, PayoutRecord } from "@/types/payout";
+import { PlatformAnalyticsResponse } from "@/types/platform";
+import { PostData } from "@/types/post";
+import { FetchRidersResponse } from "@/types/rider";
+import { SellerApi, UserListApiResponse } from "@/types/seller";
+
+const BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "https://autoparts.zubitechnologies.com/api/v1";
+
+export const getHeader = (token: string | null) => {
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+};
+
+// Login
+export async function loginUser(data: LoginFormData) {
+  const newData = {
+    email: data?.email,
+    password: data?.password,
+  };
+  const res = await fetch(`${BASE_URL}/admin/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(newData),
+  });
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.error.message || "Failed to login");
+
+  return result;
+}
+
+// Admin User
+export async function getAdmin(
+  token: string | null,
+): Promise<AdminProfileResponse> {
+  const res = await fetch(`${BASE_URL}/admin/me`, {
+    method: "GET",
+    headers: getHeader(token),
+  });
+  const result = await res.json();
+  if (!res.ok)
+    throw new Error(
+      result.error.message || "Failed to fetch admin profile data",
+    );
+
+  return result;
+}
+
+// Dashboard
+export async function fetchDashboardItems(
+  token: string | null,
+): Promise<AdminDashboardResponse> {
+  const res = await fetch(`${BASE_URL}/admin/dashboard`, {
+    method: "GET",
+    headers: getHeader(token),
+  });
+  const result = await res.json();
+  if (!res.ok)
+    throw new Error(result.error.message || "Failed to fetch dashboard data");
+
+  return result;
+}
+
+export async function platformAnalytics(
+  token: string | null,
+  period: string,
+  topSellersLimit: number | null,
+): Promise<PlatformAnalyticsResponse> {
+  const params = {
+    period: period,
+    topSellersLimit: topSellersLimit?.toString(),
+  };
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    // Only append if the value is not an empty string
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.append(key, value);
+    }
+  });
+  const res = await fetch(
+    `${BASE_URL}/admin/analytics/platform?${searchParams.toString()}`,
+    {
+      method: "GET",
+      headers: getHeader(token),
+    },
+  );
+  const result = await res.json();
+  if (!res.ok)
+    throw new Error(
+      result.error.message || "Failed to fetch platform analytics data",
+    );
+
+  return result;
+}
+
+// Sellers
+export const fetchAllSellers = async (
+  token: string | null,
+  page?: number,
+  status?: string,
+  search?: string,
+  role?: string,
+): Promise<UserListApiResponse> => {
+  const params = {
+    page: page?.toString(),
+    limit: "10",
+    status: status,
+    search: search,
+    role: role,
+  };
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    // Only append if the value is not an empty string
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.append(key, value);
+    }
+  });
+
+  const response = await fetch(
+    `${BASE_URL}/admin/users?${searchParams.toString()}`,
+    {
+      method: "GET",
+      headers: getHeader(token),
+    },
+  );
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Failed to fetch sellers");
+
+  return result;
+};
+
+export const fetchVerification = async (
+  token: string | null,
+  page?: number,
+  status?: string,
+): Promise<SellerApi> => {
+  const params = {
+    page: page?.toString(),
+    limit: "10",
+    status: status,
+    // search: search,
+    // role: role,
+  };
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    // Only append if the value is not an empty string
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.append(key, value);
+    }
+  });
+  const response = await fetch(
+    `${BASE_URL}/admin/sellers?${searchParams.toString()}`,
+    {
+      method: "GET",
+      headers: getHeader(token),
+    },
+  );
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(
+      result.error.message || "Failed to fetch sellers verification data",
+    );
+
+  return result;
+};
+
+export const suspendAccount = async ({
+  token,
+  id,
+  status,
+}: {
+  token: string | null;
+  id: number;
+  status: string;
+}) => {
+  const res = await fetch(`${BASE_URL}/admin/users/${id}/status`, {
+    method: "PATCH",
+    headers: getHeader(token),
+    body: JSON.stringify({ status }),
+  });
+
+  const result = await res.json();
+  if (!res.ok)
+    throw new Error(result.error.message || "Unable to suspend account");
+
+  return result;
+};
+
+export const approveSeller = async ({
+  token,
+  id,
+  verificationStatus,
+}: {
+  token: string | null;
+  id: number;
+  verificationStatus: string;
+}) => {
+  const res = await fetch(`${BASE_URL}/admin/sellers/${id}/verification`, {
+    method: "PATCH",
+    headers: getHeader(token),
+    body: JSON.stringify({ verificationStatus }),
+  });
+
+  const result = await res.json();
+  if (!res.ok)
+    throw new Error(result.error.message || "Unable to suspend account");
+
+  return result;
+};
+
+export const rejectSeller = async ({
+  token,
+  id,
+  verificationStatus,
+  reason,
+}: {
+  token: string | null;
+  id: number;
+  verificationStatus: string;
+  reason: string;
+}) => {
+  const res = await fetch(`${BASE_URL}/admin/sellers/${id}/verification`, {
+    method: "PATCH",
+    headers: getHeader(token),
+    body: JSON.stringify({ verificationStatus, rejectionReason: reason }),
+  });
+
+  const result = await res.json();
+  if (!res.ok)
+    throw new Error(result.error.message || "Unable to suspend account");
+
+  return result;
+};
+
+// Categories
+export const fetchCategories = async (
+  token: string | null,
+  status?: string,
+  page?: number,
+): Promise<CategoryApiResponse> => {
+  const params = {
+    page: page?.toString(),
+    limit: "10",
+    status: status,
+  };
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    // Only append if the value is not an empty string
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.append(key, value);
+    }
+  });
+  const response = await fetch(
+    `${BASE_URL}/admin/categories?${searchParams.toString()}`,
+    {
+      method: "GET",
+      headers: getHeader(token),
+    },
+  );
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to fetch categories");
+
+  return result;
+};
+
+// Orders
+export const fetchOrders = async (
+  token: string | null,
+  page?: number,
+  status?: string,
+  search?: string,
+  paymentStatus?: string,
+): Promise<OrderListApiResponse> => {
+  const params = {
+    page: page?.toString(),
+    limit: "10",
+    status: status,
+    search: search,
+    paymentStatus: paymentStatus,
+  };
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    // Only append if the value is not an empty string
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.append(key, value);
+    }
+  });
+
+  const response = await fetch(
+    `${BASE_URL}/admin/orders?${searchParams.toString()}`,
+    {
+      method: "GET",
+      headers: getHeader(token),
+    },
+  );
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to fetch orders");
+
+  return result;
+};
+
+export const fetchSingleOrder = async (
+  token: string | null,
+  orderId: number,
+): Promise<OrderDetailsResponse> => {
+  const response = await fetch(`${BASE_URL}/admin/orders/${orderId}`, {
+    method: "GET",
+    headers: getHeader(token),
+  });
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to fetch order");
+
+  return result;
+};
+
+export const updateOrderStatus = async (
+  token: string | null,
+  orderId: number,
+  status: string,
+  note: string,
+): Promise<OrderDetailsResponse> => {
+  const response = await fetch(`${BASE_URL}/admin/orders/${orderId}/status`, {
+    method: "PATCH",
+    headers: getHeader(token),
+    body: JSON.stringify({ status, note }),
+  });
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to update order status");
+
+  return result;
+};
+
+export const fetchDisputes = async (
+  token: string | null,
+  page?: number,
+  status?: string,
+  search?: string,
+  raisedBy?: string,
+  sellerId?: string,
+  dateFrom?: string,
+  dateTo?: string,
+): Promise<DisputeResponse> => {
+  const params = {
+    page: page?.toString(),
+    limit: "10",
+    status: status,
+    search: search,
+    raisedBy: raisedBy,
+    sellerId: sellerId,
+    dateFrom: dateFrom,
+    dateTo: dateTo,
+  };
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    // Only append if the value is not an empty string
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.append(key, value);
+    }
+  });
+
+  const response = await fetch(
+    `${BASE_URL}/admin/disputes?${searchParams.toString()}`,
+    {
+      method: "GET",
+      headers: getHeader(token),
+    },
+  );
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to fetch disputes");
+
+  return result;
+};
+
+export const fetchSingleDispute = async (
+  token: string | null,
+  disputeId: number,
+): Promise<DisputeDetailsResponse> => {
+  const response = await fetch(`${BASE_URL}/admin/disputes/${disputeId}`, {
+    method: "GET",
+    headers: getHeader(token),
+  });
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to fetch dispute");
+
+  return result;
+};
+
+export const updateDisputeStatus = async (
+  token: string | null,
+  disputeId: number,
+  status: string,
+  note: string,
+): Promise<DisputeDetailsResponse> => {
+  const response = await fetch(`${BASE_URL}/admin/disputes/${disputeId}`, {
+    method: "PATCH",
+    headers: getHeader(token),
+    body: JSON.stringify({ status, resolutionNote: note }),
+  });
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to update dispute status");
+
+  return result;
+};
+
+// Riders and Companies Logistics
+export const fetchCompanies = async (
+  token: string | null,
+  page?: number,
+  status?: string,
+  search?: string,
+): Promise<FetchCompaniesResponse> => {
+  const params = {
+    page: page?.toString(),
+    limit: "10",
+    status: status,
+    search: search,
+  };
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    // Only append if the value is not an empty string
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.append(key, value);
+    }
+  });
+
+  const response = await fetch(
+    `${BASE_URL}/admin/logistics/companies?${searchParams.toString()}`,
+    {
+      method: "GET",
+      headers: getHeader(token),
+    },
+  );
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to fetch companies");
+
+  return result;
+};
+
+export const fetchCompaniesDeliveryJobs = async (
+  token: string | null,
+  page?: number,
+  status?: string,
+  companyId?: string,
+  riderId?: string,
+  search?: string,
+): Promise<FetchDeliveryJobsResponse> => {
+  const params = {
+    page: page?.toString(),
+    limit: "10",
+    status: status === "all" ? "" : status,
+    companyId: companyId,
+    riderId: riderId,
+    search: search,
+  };
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    // Only append if the value is not an empty string
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.append(key, value);
+    }
+  });
+
+  const response = await fetch(
+    `${BASE_URL}/admin/delivery-jobs?${searchParams.toString()}`,
+    {
+      method: "GET",
+      headers: getHeader(token),
+    },
+  );
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to fetch delivery jobs");
+
+  return result;
+};
+
+export const assignDeliveryJob = async (
+  token: string | null,
+  jobId: number,
+  data: AssignDeliveryJobPayload,
+) => {
+  const response = await fetch(
+    `${BASE_URL}/admin/delivery-jobs/${jobId}/assign`,
+    {
+      method: "PATCH",
+      headers: getHeader(token),
+      body: JSON.stringify(data),
+    },
+  );
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to assign delivery job");
+
+  return result;
+};
+
+export const fetchCompaniesRiders = async (
+  token: string | null,
+  page?: number,
+  status?: string,
+  companyId?: string | null,
+  limit: number = 10,
+): Promise<FetchRidersResponse> => {
+  const params = {
+    page: page?.toString(),
+    limit: limit.toString(),
+    status: status,
+    companyId: companyId,
+  };
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    // Only append if the value is not an empty string
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.append(key, value);
+    }
+  });
+
+  const response = await fetch(
+    `${BASE_URL}/admin/logistics/riders?${searchParams.toString()}`,
+    {
+      method: "GET",
+      headers: getHeader(token),
+    },
+  );
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to fetch company's riders");
+
+  return result;
+};
+
+export async function onboardPartnerRequest(
+  payload: OnboardPartnerPayload,
+  token: string | null,
+): Promise<FetchCompaniesResponse> {
+  const response = await fetch("/api/v1/logistics/companies/onboard", {
+    method: "POST",
+    headers: getHeader(token),
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData?.message || "Failed to onboard partner company");
+  }
+
+  return response.json();
+}
+
+export const approveLogisticCompany = async ({
+  token,
+  id,
+  status,
+}: {
+  token: string | null;
+  id: number;
+  status: string;
+}) => {
+  const res = await fetch(
+    `${BASE_URL}/admin/logistics/companies/${id}/status`,
+    {
+      method: "PATCH",
+      headers: getHeader(token),
+      body: JSON.stringify({ status }),
+    },
+  );
+
+  const result = await res.json();
+  if (!res.ok)
+    throw new Error(result.error.message || "Unable to approve company");
+
+  return result;
+};
+
+// Payout Approval
+
+export const getPayouts = async ({
+  token,
+  companyId,
+  payeeType,
+  status,
+  sellerId,
+  search,
+  page,
+}: {
+  token: string | null;
+  companyId?: number | null;
+  sellerId?: number | null;
+  payeeType?: string;
+  status?: string;
+  search?: string;
+  page?: number;
+}): Promise<FetchPayoutsResponse> => {
+  const params = {
+    page: page?.toString(),
+    limit: "10",
+    status: status,
+    search: search,
+    sellerId: sellerId?.toString(),
+    payeeType: payeeType,
+    companyId: companyId?.toString(),
+  };
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    // Only append if the value is not an empty string
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.append(key, value);
+    }
+  });
+  const res = await fetch(
+    `${BASE_URL}/admin/payouts?${searchParams.toString()} `,
+    {
+      method: "GET",
+      headers: getHeader(token),
+    },
+  );
+
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.error.message || "Unable to get payout");
+
+  return result;
+};
+
+export const updatePayout = async (
+  token: string | null,
+  payoutId: number,
+  status: string,
+  note?: string,
+): Promise<FetchPayoutsResponse> => {
+  const response = await fetch(`${BASE_URL}/admin/payouts/${payoutId}`, {
+    method: "PATCH",
+    headers: getHeader(token),
+    body: JSON.stringify({ status, rejectionReason: note }),
+  });
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to update payout");
+
+  return result;
+};
+
+// Blog
+
+export const getBlogs = async ({
+  token,
+  page,
+  per_page,
+  sort,
+  search,
+}: {
+  token: string | null;
+  page?: number | null;
+  per_page?: number | null;
+  sort?: string | null;
+  search?: string | null;
+}): Promise<BlogPostsResponse> => {
+  const params = {
+    page: page?.toString(),
+    per_page: per_page?.toString(),
+    sort: sort,
+    search: search,
+  };
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    // Only append if the value is not an empty string
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.append(key, value);
+    }
+  });
+  const res = await fetch(
+    `${BASE_URL}/blog/posts?${searchParams.toString()} `,
+    {
+      method: "GET",
+      headers: getHeader(token),
+    },
+  );
+
+  const result = await res.json();
+  if (!res.ok)
+    throw new Error(result.error.message || "Unable to get blog posts");
+
+  return result;
+};
+
+export const getBlogsCategories = async ({
+  token,
+  page,
+  per_page,
+  sort,
+  search,
+}: {
+  token: string | null;
+  page?: number | null;
+  per_page?: number | null;
+  sort?: string | null;
+  search?: string | null;
+}): Promise<BlogCategoriesResponse> => {
+  const params = {
+    page: page?.toString(),
+    per_page: per_page?.toString(),
+    sort: sort,
+    search: search,
+  };
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    // Only append if the value is not an empty string
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.append(key, value);
+    }
+  });
+  const res = await fetch(
+    `${BASE_URL}/admin/blog/categories?${searchParams.toString()} `,
+    {
+      method: "GET",
+      headers: getHeader(token),
+    },
+  );
+
+  const result = await res.json();
+  if (!res.ok)
+    throw new Error(result.error.message || "Unable to get blog categories");
+
+  return result;
+};
+
+export const publishPost = async (
+  token: string | null,
+  id: number,
+  data: PostData,
+) => {
+  const response = await fetch(`${BASE_URL}/admin/blog/posts/${id}/publish`, {
+    method: "POST",
+    headers: getHeader(token),
+    body: JSON.stringify(data),
+  });
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to publish blog post");
+
+  return result;
+};
+
+export const createDraftPost = async (token: string | null, data: PostData) => {
+  const response = await fetch(`${BASE_URL}/admin/blog/posts`, {
+    method: "POST",
+    headers: getHeader(token),
+    body: JSON.stringify(data),
+  });
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(
+      result.error.message || "Unable to create blog draft posts",
+    );
+
+  return result;
+};
+
+export const createBlogTags = async (
+  token: string | null,
+  data: { name: string },
+) => {
+  const response = await fetch(`${BASE_URL}/admin/blog/tags`, {
+    method: "POST",
+    headers: getHeader(token),
+    body: JSON.stringify({ name: data.name }),
+  });
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to create blog tags");
+
+  return result;
+};
+
+export const createBlogCategories = async (
+  token: string | null,
+  data: { name: string; description?: string },
+) => {
+  const response = await fetch(`${BASE_URL}/admin/blog/categories`, {
+    method: "POST",
+    headers: getHeader(token),
+    body: JSON.stringify({ name: data.name, description: data.description }),
+  });
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to create blog categories");
+
+  return result;
+};
+
+export const createSlugComment = async (
+  token: string | null,
+  data: {
+    slug: string;
+    authorName: string;
+    authorEmail: string;
+    body: string;
+  },
+) => {
+  const response = await fetch(`${BASE_URL}/blog/posts/${data.slug}/comments`, {
+    method: "POST",
+    headers: getHeader(token),
+    body: JSON.stringify({
+      authorName: data.authorName,
+      authorEmail: data.authorEmail,
+      body: data.body,
+    }),
+  });
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to create slug comment");
+
+  return result;
+};
+
+export const getBlogComments = async ({
+  token,
+  page,
+  limit,
+  status,
+  postId,
+  search,
+}: {
+  token: string | null;
+  page?: number | null;
+  limit?: number | null;
+  status?: string | null;
+  postId?: number | null;
+  search?: string | null;
+}): Promise<BlogCommentsResponse> => {
+  const params = {
+    page: page?.toString(),
+    limit: limit?.toString(),
+    status: status,
+    postId: postId?.toString(),
+    search: search,
+  };
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    // Only append if the value is not an empty string
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.append(key, value);
+    }
+  });
+  const res = await fetch(
+    `${BASE_URL}/admin/blog/comments?${searchParams.toString()}`,
+    {
+      method: "GET",
+      headers: getHeader(token),
+    },
+  );
+
+  const result = await res.json();
+  if (!res.ok)
+    throw new Error(result.error.message || "Unable to get blog comments");
+
+  return result;
+};
+
+export const approvePendingComment = async (
+  token: string | null,
+  data: { id: number | string; status?: string },
+) => {
+  const response = await fetch(`${BASE_URL}/admin/blog/comments/${data.id}`, {
+    method: "PATCH",
+    headers: getHeader(token),
+    body: JSON.stringify({ status: data.status ?? "approved" }),
+  });
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(
+      result.error.message || "Unable to approve pending comment",
+    );
+
+  return result;
+};
+
+export const createDeliveryZone = async (
+  token: string | null,
+  data: { name: string; state: string; city: string },
+) => {
+  const response = await fetch(`${BASE_URL}/admin/logistics/zones`, {
+    method: "POST",
+    headers: getHeader(token),
+    body: JSON.stringify(data),
+  });
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error.message || "Unable to create delivery zone");
+
+  return result;
+};
+
+// Settings
+
+export const getPlatformSettings = async ({
+  token,
+}: {
+  token: string | null;
+}): Promise<PlatformConfigResponse> => {
+  const res = await fetch(`${BASE_URL}/admin/config `, {
+    method: "GET",
+    headers: getHeader(token),
+  });
+
+  const result = await res.json();
+  if (!res.ok)
+    throw new Error(result.error.message || "Unable to get platform settings");
+
+  return result;
+};
+
+export const updatePlatformSettings = async (
+  token: string | null,
+  // configId: number,
+  settings: any,
+): Promise<PlatformConfigResponse> => {
+  const response = await fetch(`${BASE_URL}/admin/config`, {
+    method: "PATCH",
+    headers: getHeader(token),
+    body: JSON.stringify(settings),
+  });
+
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(
+      result.error.message || "Unable to update platform settings",
+    );
+
+  return result;
+};
